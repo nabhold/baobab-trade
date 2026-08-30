@@ -20,11 +20,11 @@ describe("Baobab organisational context", () => {
 
   it("fails closed for inactive or unentitled tenants", () => {
     expect(assertTradeEntitlement(activeContext)).toEqual(activeContext)
-    expect(() =>
-      assertTradeEntitlement({ ...activeContext, status: "suspended" }),
-    ).toThrow("not active")
-    expect(() =>
-      assertTradeEntitlement({ ...activeContext, productsEnabled: [] }),
-    ).toThrow("not entitled")
+    expect(() => assertTradeEntitlement({ ...activeContext, status: "suspended" })).toThrow(
+      "not active",
+    )
+    expect(() => assertTradeEntitlement({ ...activeContext, productsEnabled: [] })).toThrow(
+      "not entitled",
+    )
   })
 })

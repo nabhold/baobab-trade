@@ -6,13 +6,13 @@ Baobab Trade is the independently deployable commerce engine. Medusa owns produc
 
 ## Repository relationships
 
-| Repository | Authority | Trade obligation |
-| --- | --- | --- |
-| `nabhold/shared` | Organisational contracts, identifiers and engineering standards | Pin, validate and adapt published contracts; do not redefine them as canonical |
-| `nabhold/baobab-cp` | Authentication-derived tenant context, lifecycle and product entitlement | Resolve context through an explicit client and fail closed |
-| `nabhold/infrastructure` | Production cloud resources, networking, secrets and deployment | Publish runtime requirements; do not own production IaC here |
-| `nabhold/baobab-erp` | ERP operational records | Integrate through APIs and signed events only |
-| `nabhold/baobab-pulse` | Intelligence and signals | Consume APIs/events without database access |
+| Repository               | Authority                                                                | Trade obligation                                                               |
+| ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `nabhold/shared`         | Organisational contracts, identifiers and engineering standards          | Pin, validate and adapt published contracts; do not redefine them as canonical |
+| `nabhold/baobab-cp`      | Authentication-derived tenant context, lifecycle and product entitlement | Resolve context through an explicit client and fail closed                     |
+| `nabhold/infrastructure` | Production cloud resources, networking, secrets and deployment           | Publish runtime requirements; do not own production IaC here                   |
+| `nabhold/baobab-erp`     | ERP operational records                                                  | Integrate through APIs and signed events only                                  |
+| `nabhold/baobab-pulse`   | Intelligence and signals                                                 | Consume APIs/events without database access                                    |
 
 ## Request boundary
 

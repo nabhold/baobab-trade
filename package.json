@@ -4,7 +4,9 @@
   "private": true,
   "description": "Baobab Trade Engine - independently deployable MedusaJS commerce engine for the Baobab Platform.",
   "license": "GPL-3.0-or-later",
-  "engines": { "node": ">=20.19.0 <23" },
+  "engines": {
+    "node": ">=20.19.0 <23"
+  },
   "packageManager": "npm@10.8.2",
   "scripts": {
     "dev": "medusa develop",
