@@ -1,0 +1,38 @@
+schema:
+  name: "baobab-engine-runtime-requirements"
+  version: "1.0"
+application:
+  name: "baobab-trade"
+  kind: "commerce-engine"
+  container_port: 9000
+ownership:
+  application_runtime: "nabhold/baobab-trade"
+  production_infrastructure: "nabhold/infrastructure"
+  control_plane: "nabhold/baobab-cp"
+dependencies:
+  postgresql:
+    required: true
+    minimum_major: 16
+    purpose: "Medusa operational data"
+  redis:
+    required: true
+    minimum_major: 7
+    purpose: "Medusa cache, coordination and background processing"
+  control_plane:
+    required: true
+    purpose: "Authenticated tenant context, lifecycle and product entitlement"
+health:
+  liveness_path: "/health"
+  readiness_path: "/readiness"
+secrets:
+  - "DATABASE_URL"
+  - "REDIS_URL"
+  - "JWT_SECRET"
+  - "COOKIE_SECRET"
+  - "BAOBAB_CONTROL_PLANE_BASE_URL"
+  - "BAOBAB_CONTROL_PLANE_CONTEXT_PATH"
+  - "BAOBAB_WEBHOOK_SIGNING_SECRET"
+constraints:
+  - "Do not share databases with Baobab ERP, Pulse or the Control Plane."
+  - "Do not encode cloud accounts, networks, domains or production credentials in this repository."
+  - "Production topology and secret injection are implemented by nabhold/infrastructure."

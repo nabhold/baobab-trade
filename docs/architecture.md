@@ -1,26 +1,36 @@
 # Baobab Trade Architecture
 
-## Purpose
+## Responsibility
 
-Baobab Trade provides commerce and trade capabilities for the Baobab Platform. It exposes APIs and events for subsidiary digital estates, Baobab ERP and Baobab Pulse while avoiding ownership of presentation, ERP or intelligence concerns.
+Baobab Trade is the independently deployable commerce engine. Medusa owns products, catalogues, customers, carts, orders, pricing, fulfilment, payment and commerce inventory abstractions. Baobab-specific code is limited to platform context, entitlement, mappings and cross-engine integration.
 
-## Boundaries
+## Repository relationships
 
-Medusa owns commerce primitives such as products, catalogues, customers, carts, orders, fulfilment, payments, pricing and inventory abstractions. Baobab extensions associate Medusa records with canonical organisational identities and publish integration events without replacing Medusa's native domain model.
+| Repository | Authority | Trade obligation |
+| --- | --- | --- |
+| `nabhold/shared` | Organisational contracts, identifiers and engineering standards | Pin, validate and adapt published contracts; do not redefine them as canonical |
+| `nabhold/baobab-cp` | Authentication-derived tenant context, lifecycle and product entitlement | Resolve context through an explicit client and fail closed |
+| `nabhold/infrastructure` | Production cloud resources, networking, secrets and deployment | Publish runtime requirements; do not own production IaC here |
+| `nabhold/baobab-erp` | ERP operational records | Integrate through APIs and signed events only |
+| `nabhold/baobab-pulse` | Intelligence and signals | Consume APIs/events without database access |
 
-## Extension points
+## Request boundary
 
-- B2B/B2C commerce: Medusa modules, workflows and API routes.
-- Products/catalogue: Medusa product APIs plus Baobab metadata links where required.
-- Customers/organisations: Baobab organisational context headers and future modules linking Medusa customers to organisation identities.
-- Pricing/carts/orders: Medusa workflows with additional data hooks.
-- Fulfilment/payments: Medusa provider integrations.
-- Inventory integration: contract-driven ERP integration; no shared tables.
-- ERP integration: HTTP APIs and outbound events.
-- Pulse intelligence: HTTP APIs for enrichment and decision support, not synchronous hard dependencies unless specified.
-- Tenant/entity context: explicit context contract preserving tenant and legal entity as separate concepts.
-- Audit/event publication: versioned event envelope and publisher abstraction.
+1. A client authenticates through the platform identity path.
+2. Trade passes the access token to the configured Control Plane context endpoint.
+3. The Control Plane returns authoritative `tenantId`, `entityId`, lifecycle state and product entitlements.
+4. Trade rejects unresolved, inactive or unentitled contexts.
+5. Medusa workflows execute inside that context.
+6. Outbound events carry `tenant_id`, `entity_id`, correlation and causation identifiers.
 
-## Runtime
+Caller-supplied tenant headers are not authoritative. Legal entity remains the default tenant boundary, but `tenant_id` and canonical `entity_id` are separate immutable identifiers.
 
-The initial runtime is intentionally simple: Node.js, MedusaJS, PostgreSQL and Redis via Docker Compose. Kubernetes, Kafka, service meshes and search clusters are excluded until requirements justify them.
+## Contracts
+
+`contracts.lock.yaml` pins the exact Shared revision and contract paths reviewed by Trade. Local TypeScript definitions are compatibility adapters until Shared publishes tenancy and event artefacts through `@nabhold/contracts-ts`. They must then be replaced by generated imports rather than allowed to become a competing standard.
+
+## Deployment
+
+`docker-compose.yml` is local development tooling. `runtime/requirements.yaml` is the hand-off contract for `nabhold/infrastructure`. This repository builds the application image; Infrastructure owns production topology, managed databases, networks, domains, certificates, secret injection, scaling and rollback.
+
+No engine shares database tables with another engine.

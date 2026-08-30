@@ -1,0 +1,32 @@
+schema:
+  name: "nabhold-contract-consumption-lock"
+  version: "1.0"
+consumer:
+  repository: "nabhold/baobab-trade"
+  version: "0.2.0"
+sources:
+  shared:
+    repository: "nabhold/shared"
+    commit: "498c431ea7eb76eb038975bc49e7087499d30d48"
+    contracts:
+      development_environment:
+        path: "contracts/development-environment/schema.yaml"
+        version: "1.0"
+      tenancy:
+        path: "contracts/tenancy/tenancy.yaml"
+        version: "1.0"
+      legal_entity_registry:
+        path: "contracts/legal-entity/registry.yaml"
+        version: "current-at-pinned-commit"
+  control_plane:
+    repository: "nabhold/baobab-cp"
+    role: "authoritative runtime provider of authenticated tenant context, lifecycle status and product entitlement"
+    api_contract_status: "not-yet-published-in-nabhold/shared"
+  event_envelope:
+    owner: "nabhold/shared"
+    publication_status: "pending"
+    compatibility_reference: "nabhold/baobab-erp/contracts/events/envelope.schema.json"
+policy:
+  fail_on_unresolved_tenant_context: true
+  allow_cross_engine_database_access: false
+  allow_local_redefinition_as_canonical: false

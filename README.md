@@ -1,41 +1,53 @@
 # Baobab Trade
 
-Baobab Trade is the independently deployable Trade Engine of the Baobab Platform. It is a headless B2B/B2C commerce engine built on MedusaJS; Medusa remains the primary commerce domain engine and Baobab-specific behaviour is added through Medusa extensions, modules, workflows, subscribers, API routes and configuration.
+Baobab Trade is the independently deployable Trade Engine of the Baobab Platform. It is a headless B2B/B2C commerce engine built on MedusaJS. Medusa remains the commerce system; Baobab-specific code adds only organisational context, entitlement and explicit integrations.
+
+## Architectural boundaries
+
+- `nabhold/shared` owns canonical organisational contracts and engineering standards.
+- `nabhold/baobab-cp` resolves authenticated tenant context, lifecycle and product entitlement.
+- `nabhold/infrastructure` owns production infrastructure and deployment orchestration.
+- Baobab ERP and Pulse are reached through APIs and signed events, never shared databases.
+- Subsidiary frontends remain in their own digital-estate repositories.
+
+Contract provenance is pinned in `contracts.lock.yaml`. Runtime needs are declared in `runtime/requirements.yaml`.
 
 ## Local development
 
-Prerequisites follow Medusa's current guidance: Node.js 20.19+ or 22.12+, Git and PostgreSQL. Docker Compose is provided for a fully local stack.
+Prerequisites follow Medusa guidance: Node.js 20.19+ or 22.12+, Git, PostgreSQL and Redis.
 
 ```bash
 cp .env.example .env
-npm ci
+npm install
 npm run dev
 ```
 
-Or run the full stack:
+Or use the local development stack:
 
 ```bash
 docker compose up --build
 ```
 
-Health endpoints:
+The Compose file is deliberately local-only; it is not the production deployment model.
 
-- `GET /health` for liveness.
-- `GET /readiness` for readiness.
+## Request context
+
+Trade accepts commerce requests only after authoritative context resolution through the Control Plane adapter. A valid context contains distinct `tenantId` and canonical `entityId` values, an active lifecycle status and the `baobab-trade` product entitlement. Unresolved context fails closed.
+
+## Health
+
+- `GET /health` — process liveness.
+- `GET /readiness` — configuration readiness, including Control Plane configuration.
 
 ## Repository layout
 
-- `medusa-config.ts` — upstream Medusa application configuration.
-- `src/api` — custom Medusa API routes for platform-facing capabilities.
-- `src/baobab` — Baobab Trade extensions, contracts, context, logging and integration foundations.
-- `docs` — architecture documentation and ADRs.
-- `tests` — unit and contract tests.
-- `.github/workflows` — CI foundation.
-
-## Integration principles
-
-Baobab Trade integrates with Baobab ERP and Baobab Pulse through explicit API and event contracts only. It must not read or write another engine's database. Legal entity is the default tenant boundary, but tenant, organisation, legal entity, business unit, function, team, user, membership, role and permission remain distinct platform concepts.
+- `src/api` — Medusa API extensions.
+- `src/baobab/contracts` — temporary compatibility adapters with explicit Shared provenance.
+- `src/baobab/control-plane` — Control Plane client boundary.
+- `src/baobab/events` — versioned cross-engine envelopes and publishers.
+- `runtime` — infrastructure-facing runtime requirements.
+- `docs` — architecture and decisions.
 
 ## Secrets
 
-Never commit real secrets. Use `.env.example` only for documented variable names and local placeholders. Production deployments must inject `JWT_SECRET`, `COOKIE_SECRET`, database credentials, Redis credentials and webhook shared secrets from the deployment secret manager.
+Never commit credentials. Production injects database, Redis, Medusa signing and webhook secrets through facilities owned by `nabhold/infrastructure`. Access tokens are forwarded only to the configured Control Plane context endpoint and must never be logged.
