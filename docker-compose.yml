@@ -1,0 +1,51 @@
+services:
+  trade:
+    build: .
+    command: npm run dev
+    env_file: .env.example
+    environment:
+      DATABASE_URL: postgres://baobab_trade:baobab_trade@postgres:5432/baobab_trade
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://localhost:9000/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: baobab_trade
+      POSTGRES_USER: baobab_trade
+      POSTGRES_PASSWORD: baobab_trade
+    ports: ["5432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baobab_trade -d baobab_trade"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
+  node_modules:

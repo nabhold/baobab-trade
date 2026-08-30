@@ -1,0 +1,41 @@
+{
+  "name": "@nabhold/baobab-trade",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Baobab Trade Engine - independently deployable MedusaJS commerce engine for the Baobab Platform.",
+  "license": "GPL-3.0-or-later",
+  "engines": {
+    "node": ">=20.19.0 <23"
+  },
+  "packageManager": "npm@10.8.2",
+  "scripts": {
+    "dev": "medusa develop",
+    "build": "medusa build",
+    "start": "medusa start",
+    "migrate": "medusa db:migrate",
+    "seed": "medusa exec ./src/scripts/seed.ts",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@medusajs/framework": "^2.8.8",
+    "@medusajs/medusa": "^2.8.8",
+    "@medusajs/utils": "^2.8.8",
+    "awilix": "^8.0.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
