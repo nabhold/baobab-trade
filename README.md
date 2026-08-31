@@ -51,3 +51,9 @@ Trade accepts commerce requests only after authoritative context resolution thro
 ## Secrets
 
 Never commit credentials. Production injects database, Redis, Medusa signing and webhook secrets through facilities owned by `nabhold/infrastructure`. Access tokens are forwarded only to the configured Control Plane context endpoint and must never be logged.
+
+## Foundation 4
+
+Codespaces uses `ghcr.io/nabhold/baobab-dev:1.2.6`. The reusable, SHA-pinned
+Foundation gate validates the environment contract and reproducible inputs and
+scans source, dependencies, secrets, configuration, and the Trade image.

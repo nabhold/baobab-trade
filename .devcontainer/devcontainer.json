@@ -1,0 +1,13 @@
+{
+  "name": "Nabhold baobab-trade",
+  "image": "ghcr.io/nabhold/baobab-dev:1.2.6",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "init": true,
+  "postCreateCommand": "npm ci --ignore-scripts && npm run typecheck",
+  "customizations": {
+    "vscode": {
+      "extensions": ["github.vscode-github-actions", "redhat.vscode-yaml"]
+    }
+  }
+}
