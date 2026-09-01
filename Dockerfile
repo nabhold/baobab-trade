@@ -1,4 +1,4 @@
-FROM node:20.19.0-bookworm-slim AS deps
+FROM node:26.8.1-bookworm-slim AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ FROM deps AS build
 COPY . .
 RUN npm run build
 
-FROM node:20.19.0-bookworm-slim AS runtime
+FROM node:26.8.1-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 RUN chown node:node /app
