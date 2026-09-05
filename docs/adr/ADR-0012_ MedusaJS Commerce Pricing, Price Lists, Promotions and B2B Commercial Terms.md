@@ -1,12 +1,12 @@
-# ADR-0006: MedusaJS Commerce Pricing, Price Lists, Promotions and B2B Commercial Terms
+# ADR-0012: MedusaJS Commerce Pricing, Price Lists, Promotions and B2B Commercial Terms
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0005-commerce-product-variant-catalogue-and-canonical-product-authority-model.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0011-commerce-product-variant-catalogue-and-canonical-product-authority-model.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Payload CMS, Baobab Digital Estates
 - **Decision Class:** Commerce Pricing / B2B Commercial Terms / Promotions
 

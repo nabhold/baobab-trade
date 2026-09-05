@@ -1,12 +1,12 @@
-# ADR-0011: MedusaJS Commerce Customer, B2B Organisation, Buyer Identity and Authorization Model
+# ADR-0017: MedusaJS Commerce Customer, B2B Organisation, Buyer Identity and Authorization Model
 
 - **Status:** Accepted
 - **Date:** 2026-09-03
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0010-medusajs-commerce-fulfilment-shipping-delivery-and-external-logistics-boundary.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0016-medusajs-commerce-fulfilment-shipping-delivery-and-external-logistics-boundary.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab Identity Provider, iDempiere ERP, Baobab Digital Estates
 - **Decision Class:** Customer Identity / B2B Organisation / Buyer Authorization / Commerce Access Control
 
@@ -44,7 +44,7 @@ This ADR does not redefine:
 - eventing;
 - isolation.
 
-Those remain governed by ADR-0002 through ADR-0010.
+Those remain governed by ADR-0008 through ADR-0016.
 
 ---
 
@@ -654,7 +654,7 @@ Catalogue access restrictions apply to:
 
 Organisation-specific prices SHALL be visible only to authorised members of the relevant Customer Organisation.
 
-ADR-0006 remains authoritative for pricing semantics.
+ADR-0012 remains authoritative for pricing semantics.
 
 ---
 
@@ -1415,7 +1415,7 @@ A verified organisation may still have suspended Buyers.
 
 Customer tax identifiers SHALL be protected and validated according to applicable jurisdiction policy.
 
-ADR-0012 will govern tax-context semantics.
+ADR-0018 will govern tax-context semantics.
 
 ---
 

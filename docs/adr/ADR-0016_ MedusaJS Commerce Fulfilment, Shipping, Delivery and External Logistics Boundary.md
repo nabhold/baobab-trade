@@ -1,12 +1,12 @@
-# ADR-0010: MedusaJS Commerce Fulfilment, Shipping, Delivery and External Logistics Boundary
+# ADR-0016: MedusaJS Commerce Fulfilment, Shipping, Delivery and External Logistics Boundary
 
 - **Status:** Accepted
 - **Date:** 2026-09-03
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0009-medusajs-commerce-payment-orchestration-provider-isolation-and-financial-reconciliation.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0015-medusajs-commerce-payment-orchestration-provider-isolation-and-financial-reconciliation.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Baobab Digital Estates, WMS, 3PL Providers, Carriers, Customs/Trade Services
 - **Decision Class:** Fulfilment / Shipping / Delivery / Logistics Integration
 
@@ -29,7 +29,7 @@ Its purpose is specifically to answer:
 
 > **Once Baobab has accepted a Commerce Order, which system decides how that Order is fulfilled, which system executes the physical logistics, and which system owns each resulting state?**
 
-This ADR does not redefine the architectural rules established by ADR-0002 through ADR-0009.
+This ADR does not redefine the architectural rules established by ADR-0008 through ADR-0015.
 
 Those ADRs remain authoritative for:
 
@@ -143,7 +143,7 @@ The defining rule is:
 
 # 4. Fulfilment Is Not Inventory
 
-This ADR preserves the distinction established in ADR-0007:
+This ADR preserves the distinction established in ADR-0013:
 
 ```text
 Inventory != Fulfilment
@@ -745,7 +745,7 @@ Operational and financial processes SHALL reconcile independently.
 
 # 41. Cancellation Before Fulfilment
 
-If an Order is cancelled before physical execution begins, the system SHOULD attempt to cancel the downstream fulfilment request and release applicable inventory according to ADR-0007 and ADR-0008.
+If an Order is cancelled before physical execution begins, the system SHOULD attempt to cancel the downstream fulfilment request and release applicable inventory according to ADR-0013 and ADR-0014.
 
 ---
 
@@ -815,7 +815,7 @@ Physical return logistics MAY be executed by:
 
 # 46. Return Is Not Restock
 
-The rule from ADR-0007 remains:
+The rule from ADR-0013 remains:
 
 > A customer initiating or shipping a Return does not make the Product available for resale.
 
@@ -891,7 +891,7 @@ A refund may occur:
 
 depending on policy.
 
-ADR-0009 remains authoritative for financial refund execution.
+ADR-0015 remains authoritative for financial refund execution.
 
 ---
 

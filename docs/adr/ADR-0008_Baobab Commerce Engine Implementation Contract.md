@@ -4,7 +4,7 @@
 **Engine:** MedusaJS Commerce Engine  
 **Repository:** `nabhold/baobab-trade`  
 **Status:** Normative  
-**Architecture Parent:** `ADR-XXX — MedusaJS as the Baobab Commerce Engine`  
+**Architecture Parent:** `ADR-0007 — MedusaJS as the Baobab Commerce Engine`  
 **Control Plane:** `nabhold/baobab-cp` — Go  
 **ERP Engine:** `nabhold/baobab-erp` — iDempiere  
 **Content Engine:** Payload CMS  

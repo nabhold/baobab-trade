@@ -1,12 +1,12 @@
-# ADR-0004: MedusaJS Commerce Market, Region, Currency, Sales Channel and Legal Seller Model
+# ADR-0010: MedusaJS Commerce Market, Region, Currency, Sales Channel and Legal Seller Model
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0003-medusajs-commerce-tenancy-and-isolation-model.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0009-medusajs-commerce-tenancy-and-isolation-model.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Payload CMS, Baobab Digital Estates
 - **Decision Class:** Commerce Context / Internationalisation / Market Architecture
 

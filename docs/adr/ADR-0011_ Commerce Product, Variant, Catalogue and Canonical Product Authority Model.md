@@ -1,12 +1,12 @@
-# ADR-0005: Commerce Product, Variant, Catalogue and Canonical Product Authority Model
+# ADR-0011: Commerce Product, Variant, Catalogue and Canonical Product Authority Model
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0004-medusajs-commerce-market-region-currency-sales-channel-and-legal-seller-model.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0010-medusajs-commerce-market-region-currency-sales-channel-and-legal-seller-model.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Payload CMS, Baobab Digital Estates
 - **Decision Class:** Product Identity / Catalogue / Cross-Engine Authority
 
