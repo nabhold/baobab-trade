@@ -4,7 +4,7 @@
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
   "init": true,
-  "postCreateCommand": "npm ci --ignore-scripts && npm run typecheck",
+  "postCreateCommand": "baobab-verify --contract && npm ci --ignore-scripts && npm run typecheck",
   "customizations": {
     "vscode": {
       "extensions": ["github.vscode-github-actions", "redhat.vscode-yaml"]
