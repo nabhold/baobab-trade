@@ -1,12 +1,12 @@
-# ADR-0009: MedusaJS Commerce Payment Orchestration, Provider Isolation and Financial Reconciliation
+# ADR-0015: MedusaJS Commerce Payment Orchestration, Provider Isolation and Financial Reconciliation
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0008-medusajs-commerce-checkout-order-commitment-and-distributed-transaction-boundary.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0014-medusajs-commerce-checkout-order-commitment-and-distributed-transaction-boundary.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Baobab Digital Estates, Payment Service Providers, Banking/Settlement Systems
 - **Decision Class:** Payments / Provider Architecture / Financial Integration / Reconciliation
 

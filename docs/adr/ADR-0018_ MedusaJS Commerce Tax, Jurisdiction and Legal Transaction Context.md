@@ -1,12 +1,12 @@
-# ADR-0012: MedusaJS Commerce Tax, Jurisdiction and Legal Transaction Context
+# ADR-0018: MedusaJS Commerce Tax, Jurisdiction and Legal Transaction Context
 
 - **Status:** Accepted
 - **Date:** 2026-09-03
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0011-medusajs-commerce-customer-b2b-organisation-buyer-identity-and-authorization-model.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0017-medusajs-commerce-customer-b2b-organisation-buyer-identity-and-authorization-model.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Baobab Digital Estates, External Tax Providers, Customs/Trade Services
 - **Decision Class:** Tax / Jurisdiction / Legal Seller / Transaction Compliance
 
@@ -29,7 +29,7 @@ It specifically answers:
 
 > **Which legal entity is selling, which jurisdiction governs the transaction, what tax treatment applies, who calculates transactional tax, and how is that result preserved and communicated to ERP?**
 
-This ADR does not redefine the architectural decisions established by ADR-0002 through ADR-0011.
+This ADR does not redefine the architectural decisions established by ADR-0008 through ADR-0017.
 
 ---
 
@@ -531,7 +531,7 @@ The tax engine SHALL receive sufficient discount provenance to calculate correct
 
 Promotional discounts SHALL not bypass tax calculation.
 
-ADR-0006 remains authoritative for commercial promotion calculation.
+ADR-0012 remains authoritative for commercial promotion calculation.
 
 This ADR governs the tax consequence.
 
@@ -874,7 +874,7 @@ It SHALL not erase the historical fact that the original transaction existed.
 
 Refund tax treatment SHALL correspond to the applicable refunded transaction amounts and jurisdictional rules.
 
-ADR-0009 remains authoritative for financial refund execution.
+ADR-0015 remains authoritative for financial refund execution.
 
 ---
 

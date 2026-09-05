@@ -1,7 +1,9 @@
 export type BaobabTradeEnvironment = {
   engineId: string
   controlPlaneBaseUrl?: string
-  controlPlaneContextPath?: string
+  controlPlaneContextPath: string
+  controlPlaneMarketPathTemplate: string
+  controlPlaneProductId: string
   erpApiBaseUrl?: string
   pulseApiBaseUrl?: string
   webhookSigningSecret?: string
@@ -21,10 +23,10 @@ export const getBaobabTradeEnvironment = (): BaobabTradeEnvironment => ({
     "BAOBAB_CONTROL_PLANE_BASE_URL",
     process.env.BAOBAB_CONTROL_PLANE_BASE_URL,
   ),
-  controlPlaneContextPath: requiredInProduction(
-    "BAOBAB_CONTROL_PLANE_CONTEXT_PATH",
-    process.env.BAOBAB_CONTROL_PLANE_CONTEXT_PATH,
-  ),
+  controlPlaneContextPath: process.env.BAOBAB_CONTROL_PLANE_CONTEXT_PATH || "/v1/context/resolve",
+  controlPlaneMarketPathTemplate:
+    process.env.BAOBAB_CONTROL_PLANE_MARKET_PATH_TEMPLATE || "/v1/markets/{market_id}",
+  controlPlaneProductId: process.env.BAOBAB_CONTROL_PLANE_PRODUCT_ID || "baobab-trade",
   erpApiBaseUrl: process.env.BAOBAB_ERP_API_BASE_URL,
   pulseApiBaseUrl: process.env.BAOBAB_PULSE_API_BASE_URL,
   webhookSigningSecret: requiredInProduction(

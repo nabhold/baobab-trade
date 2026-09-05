@@ -1,4 +1,4 @@
-# ADR-XXX — MedusaJS as the Baobab Commerce Engine
+# ADR-0007 — MedusaJS as the Baobab Commerce Engine
 
 **Status:** Accepted  
 **Decision Type:** Platform Architecture / Commerce  

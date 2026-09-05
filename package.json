@@ -14,6 +14,7 @@
     "start": "medusa start",
     "migrate": "medusa db:migrate",
     "seed": "medusa exec ./src/scripts/seed.ts",
+    "bootstrap:market": "medusa exec ./src/scripts/bootstrap-market.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

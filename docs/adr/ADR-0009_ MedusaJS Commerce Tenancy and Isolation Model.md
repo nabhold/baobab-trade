@@ -1,11 +1,11 @@
-# ADR-0003: MedusaJS Commerce Tenancy and Isolation Model
+# ADR-0009: MedusaJS Commerce Tenancy and Isolation Model
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Payload CMS, Baobab Digital Estates
 - **Supersedes:** Any implicit model in which a Medusa instance, Medusa region, sales channel, market, legal entity, or digital estate is automatically treated as a Baobab tenant
 

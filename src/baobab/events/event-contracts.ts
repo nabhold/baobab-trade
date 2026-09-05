@@ -1,16 +1,121 @@
-import type { BaobabOrganisationalContext } from "../contracts/organisational-context"
+import type { BaobabTenantContext } from "../contracts/tenant-context"
 
-export type BaobabEventEnvelope<TPayload extends Record<string, unknown>> = {
-  event_id: string
-  event_type: string
-  schema_version: "1.0"
-  occurred_at: string
-  source: "baobab-trade"
-  correlation_id: string
-  causation_id?: string | null
-  tenant_id: string
-  entity_id: string
-  payload: TPayload
+/**
+ * Mirrors nabhold/shared contracts/events/v1/envelope.schema.json — a
+ * CloudEvents 1.0 structured JSON profile. `baobabscope` and `tenantid` are
+ * modelled as a discriminated union so a platform event can never carry (or
+ * omit) tenant context incorrectly at compile time, matching the schema's
+ * if/then/else coupling rule.
+ */
+type BaobabCloudEventBase<TData extends Record<string, unknown>> = {
+  specversion: "1.0"
+  id: string
+  type: string
+  source: string
+  subject: string
+  time: string
+  datacontenttype: "application/json"
+  dataschema: string
+  correlationid: string
+  causationid?: string
+  idempotencykey?: string
+  traceparent?: string
+  tracestate?: string
+  data: TData
+}
+
+export type BaobabTenantEvent<TData extends Record<string, unknown> = Record<string, unknown>> =
+  BaobabCloudEventBase<TData> & { baobabscope: "tenant"; tenantid: string }
+
+export type BaobabPlatformEvent<TData extends Record<string, unknown> = Record<string, unknown>> =
+  BaobabCloudEventBase<TData> & { baobabscope: "platform" }
+
+export type BaobabCloudEvent<TData extends Record<string, unknown> = Record<string, unknown>> =
+  | BaobabTenantEvent<TData>
+  | BaobabPlatformEvent<TData>
+
+/** Stable logical producer URI. Must never be a deployment hostname (schema `source` rule). */
+export const TRADE_EVENT_SOURCE = "https://engines.nabhold.com/baobab-trade"
+
+const EVENT_TYPE_PATTERN = /^com\.nabhold\.[a-z0-9]+(?:[.-][a-z0-9]+)*\.v[1-9][0-9]*$/
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const assertValidEventType = (type: string): void => {
+  if (!EVENT_TYPE_PATTERN.test(type)) {
+    throw new Error(`Event type "${type}" does not match com.nabhold.<name>.v<N>`)
+  }
+}
+
+export type TradeEventInput<TData extends Record<string, unknown>> = {
+  id: string
+  type: string
+  subject: string
+  time: string
+  dataschema: string
+  correlationid: string
+  causationid?: string
+  idempotencykey?: string
+  traceparent?: string
+  tracestate?: string
+  data: TData
+}
+
+export const createTenantTradeEvent = <TData extends Record<string, unknown>>(
+  context: BaobabTenantContext,
+  input: TradeEventInput<TData>,
+): BaobabTenantEvent<TData> => {
+  assertValidEventType(input.type)
+  return {
+    specversion: "1.0",
+    datacontenttype: "application/json",
+    source: TRADE_EVENT_SOURCE,
+    baobabscope: "tenant",
+    tenantid: context.tenantId,
+    ...input,
+  }
+}
+
+export const createPlatformTradeEvent = <TData extends Record<string, unknown>>(
+  input: TradeEventInput<TData>,
+): BaobabPlatformEvent<TData> => {
+  assertValidEventType(input.type)
+  return {
+    specversion: "1.0",
+    datacontenttype: "application/json",
+    source: TRADE_EVENT_SOURCE,
+    baobabscope: "platform",
+    ...input,
+  }
+}
+
+export const isValidCloudEvent = (candidate: unknown): candidate is BaobabCloudEvent => {
+  if (typeof candidate !== "object" || candidate === null) return false
+  const value = candidate as Partial<BaobabCloudEvent> & Record<string, unknown>
+
+  const baseValid =
+    value.specversion === "1.0" &&
+    typeof value.id === "string" &&
+    UUID_PATTERN.test(value.id) &&
+    typeof value.type === "string" &&
+    EVENT_TYPE_PATTERN.test(value.type) &&
+    typeof value.source === "string" &&
+    typeof value.subject === "string" &&
+    value.subject.length > 0 &&
+    typeof value.time === "string" &&
+    value.datacontenttype === "application/json" &&
+    typeof value.dataschema === "string" &&
+    typeof value.correlationid === "string" &&
+    UUID_PATTERN.test(value.correlationid) &&
+    typeof value.data === "object" &&
+    value.data !== null
+
+  if (!baseValid) return false
+
+  if (value.baobabscope === "tenant") {
+    return typeof value.tenantid === "string" && value.tenantid.length > 0
+  }
+
+  return value.baobabscope === "platform" && value.tenantid === undefined
 }
 
 export type TradeOrderAcceptedPayload = {
@@ -20,19 +125,3 @@ export type TradeOrderAcceptedPayload = {
   currency: string
   total: number
 }
-
-export const createTradeEvent = <TPayload extends Record<string, unknown>>(
-  context: BaobabOrganisationalContext,
-  event: Omit<
-    BaobabEventEnvelope<TPayload>,
-    "source" | "schema_version" | "tenant_id" | "entity_id"
-  >,
-): BaobabEventEnvelope<TPayload> => ({
-  ...event,
-  source: "baobab-trade",
-  schema_version: "1.0",
-  tenant_id: context.tenantId,
-  entity_id: context.entityId,
-})
-
-export type TradeIntegrationEvent = BaobabEventEnvelope<TradeOrderAcceptedPayload>

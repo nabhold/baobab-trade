@@ -1,12 +1,12 @@
-# ADR-0007: MedusaJS Commerce Inventory, Availability, Reservation and ERP Stock Authority Model
+# ADR-0013: MedusaJS Commerce Inventory, Availability, Reservation and ERP Stock Authority Model
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0006-medusajs-commerce-pricing-price-lists-promotions-and-b2b-commercial-terms.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0012-medusajs-commerce-pricing-price-lists-promotions-and-b2b-commercial-terms.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Payload CMS, Baobab Digital Estates
 - **Decision Class:** Inventory / Stock Availability / Reservations / Cross-Engine Authority
 

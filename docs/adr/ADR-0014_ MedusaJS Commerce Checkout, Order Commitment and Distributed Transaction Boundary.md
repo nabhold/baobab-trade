@@ -1,12 +1,12 @@
-# ADR-0008: MedusaJS Commerce Checkout, Order Commitment and Distributed Transaction Boundary
+# ADR-0014: MedusaJS Commerce Checkout, Order Commitment and Distributed Transaction Boundary
 
 - **Status:** Accepted
 - **Date:** 2026-09-02
 - **Decision Owners:** Baobab Platform Architecture
 - **Scope:** Baobab Commerce Engine
 - **Repository:** `nabhold/baobab-trade`
-- **Parent ADR:** `ADR-0002-medusajs-commerce-engine.md`
-- **Preceded By:** `ADR-0007-medusajs-commerce-inventory-availability-reservation-and-erp-stock-authority-model.md`
+- **Parent ADR:** `ADR-0008-medusajs-commerce-engine.md`
+- **Preceded By:** `ADR-0013-medusajs-commerce-inventory-availability-reservation-and-erp-stock-authority-model.md`
 - **Related Systems:** `nabhold/baobab-cp`, Baobab ERP Engine (iDempiere), Payload CMS, Baobab Digital Estates, Payment Providers, Fulfilment Providers
 - **Decision Class:** Checkout / Order Lifecycle / Distributed Transactions / Reliability
 
@@ -1489,7 +1489,7 @@ Order lines SHALL preserve sufficient Product/Variant information for historical
 
 # 88. Price Snapshot
 
-Order lines SHALL preserve committed monetary facts according to ADR-0006.
+Order lines SHALL preserve committed monetary facts according to ADR-0012.
 
 ---
 
