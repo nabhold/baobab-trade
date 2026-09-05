@@ -180,20 +180,20 @@ Provider Transaction != ERP Accounting Entry
 
 Authority SHALL be explicitly divided.
 
-| Concern | Authority |
-|---|---|
-| Checkout payment selection | Medusa |
-| Payment Session | Medusa |
-| Payment orchestration | Medusa |
-| Provider transaction execution | Payment Provider |
-| Provider authorization result | Payment Provider |
-| Provider capture result | Payment Provider |
-| Provider refund execution | Payment Provider |
-| Commerce payment state | Medusa |
-| Settlement confirmation | Provider/banking evidence |
-| Financial accounting | iDempiere |
-| Accounts receivable | iDempiere |
-| Canonical identity/mapping | Control Plane |
+| Concern                        | Authority                 |
+| ------------------------------ | ------------------------- |
+| Checkout payment selection     | Medusa                    |
+| Payment Session                | Medusa                    |
+| Payment orchestration          | Medusa                    |
+| Provider transaction execution | Payment Provider          |
+| Provider authorization result  | Payment Provider          |
+| Provider capture result        | Payment Provider          |
+| Provider refund execution      | Payment Provider          |
+| Commerce payment state         | Medusa                    |
+| Settlement confirmation        | Provider/banking evidence |
+| Financial accounting           | iDempiere                 |
+| Accounts receivable            | iDempiere                 |
+| Canonical identity/mapping     | Control Plane             |
 
 No engine SHALL silently assume authority assigned to another.
 

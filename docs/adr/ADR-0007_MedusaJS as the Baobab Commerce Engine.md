@@ -303,30 +303,30 @@ Medusa SHALL be authoritative for the operational state of this lifecycle until 
 
 The following allocation SHALL apply unless superseded by a more specific capability ADR.
 
-| Capability | Primary Authority |
-|---|---|
-| Platform tenant/context | Baobab Control Plane |
-| Legal entity identity | Baobab canonical/control-plane model |
-| Engine registration | Baobab Control Plane |
-| Capability binding | Baobab Control Plane |
-| Commerce product representation | Medusa |
-| Editorial product content | Payload CMS |
-| Commerce price | Medusa |
-| Cart | Medusa |
-| Checkout | Medusa |
-| Commerce order | Medusa |
-| Payment orchestration | Medusa |
-| Commerce promotion | Medusa |
-| Commerce sales channel | Medusa |
-| Accounting transaction | iDempiere |
-| General ledger | iDempiere |
-| Accounts receivable | iDempiere |
-| Accounts payable | iDempiere |
-| ERP inventory/accounting truth | iDempiere |
-| Editorial content | Payload CMS |
-| Website presentation | Digital Estate |
-| Canonical cross-engine mappings | Baobab Control Plane |
-| Engine-instance registration | Baobab Control Plane |
+| Capability                      | Primary Authority                    |
+| ------------------------------- | ------------------------------------ |
+| Platform tenant/context         | Baobab Control Plane                 |
+| Legal entity identity           | Baobab canonical/control-plane model |
+| Engine registration             | Baobab Control Plane                 |
+| Capability binding              | Baobab Control Plane                 |
+| Commerce product representation | Medusa                               |
+| Editorial product content       | Payload CMS                          |
+| Commerce price                  | Medusa                               |
+| Cart                            | Medusa                               |
+| Checkout                        | Medusa                               |
+| Commerce order                  | Medusa                               |
+| Payment orchestration           | Medusa                               |
+| Commerce promotion              | Medusa                               |
+| Commerce sales channel          | Medusa                               |
+| Accounting transaction          | iDempiere                            |
+| General ledger                  | iDempiere                            |
+| Accounts receivable             | iDempiere                            |
+| Accounts payable                | iDempiere                            |
+| ERP inventory/accounting truth  | iDempiere                            |
+| Editorial content               | Payload CMS                          |
+| Website presentation            | Digital Estate                       |
+| Canonical cross-engine mappings | Baobab Control Plane                 |
+| Engine-instance registration    | Baobab Control Plane                 |
 
 Ownership does not prohibit replication.
 
@@ -564,17 +564,17 @@ This deliberately avoids declaring an overloaded universal "product master" with
 
 For example:
 
-| Attribute | Authority |
-|---|---|
-| Commerce variant | Medusa |
-| Commerce price | Medusa |
-| Cart eligibility | Medusa |
-| Marketing story | Payload |
-| SEO editorial content | Payload |
-| Long-form merchandising content | Payload |
-| Accounting classification | iDempiere |
+| Attribute                       | Authority |
+| ------------------------------- | --------- |
+| Commerce variant                | Medusa    |
+| Commerce price                  | Medusa    |
+| Cart eligibility                | Medusa    |
+| Marketing story                 | Payload   |
+| SEO editorial content           | Payload   |
+| Long-form merchandising content | Payload   |
+| Accounting classification       | iDempiere |
 | Financial posting configuration | iDempiere |
-| ERP inventory valuation | iDempiere |
+| ERP inventory valuation         | iDempiere |
 
 Attribute-level ownership SHALL be documented when representations overlap.
 

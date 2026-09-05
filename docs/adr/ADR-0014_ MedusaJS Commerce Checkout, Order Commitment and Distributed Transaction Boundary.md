@@ -2073,19 +2073,19 @@ after event publication before publish acknowledgement
 
 At minimum, implementation design SHALL document behaviour for:
 
-| Failure | Required Behaviour |
-|---|---|
-| Price validation fails | reject/reprice before commit |
-| Inventory unavailable | reject or explicit backorder |
-| Payment declined | reject Order commitment |
-| Payment result unknown | reconcile safely |
-| Reservation fails after authorization | compensate payment |
-| Local DB commit fails | no committed Order |
-| Broker unavailable after local commit | retain outbox and retry |
-| ERP unavailable | retain committed Commerce Order and retry |
-| ERP rejects Order | surface reconciliation state |
-| Notification fails | Order remains committed |
-| Analytics unavailable | Order remains committed |
+| Failure                               | Required Behaviour                        |
+| ------------------------------------- | ----------------------------------------- |
+| Price validation fails                | reject/reprice before commit              |
+| Inventory unavailable                 | reject or explicit backorder              |
+| Payment declined                      | reject Order commitment                   |
+| Payment result unknown                | reconcile safely                          |
+| Reservation fails after authorization | compensate payment                        |
+| Local DB commit fails                 | no committed Order                        |
+| Broker unavailable after local commit | retain outbox and retry                   |
+| ERP unavailable                       | retain committed Commerce Order and retry |
+| ERP rejects Order                     | surface reconciliation state              |
+| Notification fails                    | Order remains committed                   |
+| Analytics unavailable                 | Order remains committed                   |
 
 ---
 

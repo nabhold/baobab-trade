@@ -388,27 +388,27 @@ Authority SHALL instead be explicitly assigned by attribute or capability.
 
 A conceptual authority matrix is:
 
-| Attribute / Concern | Authority |
-|---|---|
-| Canonical product identity | Control Plane |
-| Canonical variant identity | Control Plane |
-| Medusa product ID | Medusa |
-| ERP item/product ID | iDempiere |
-| Payload content ID | Payload |
-| Commerce variant structure | Medusa |
-| Transactional sellability | Medusa |
-| Commerce price | Medusa |
-| Promotion eligibility | Medusa |
-| Cart eligibility | Medusa |
-| Editorial title | Payload |
-| Long-form description | Payload |
-| Marketing media | Payload |
-| SEO content | Payload |
-| Accounting classification | iDempiere |
-| Cost valuation | iDempiere |
-| Enterprise inventory valuation | iDempiere |
-| ERP procurement data | iDempiere |
-| Canonical mapping | Control Plane |
+| Attribute / Concern            | Authority     |
+| ------------------------------ | ------------- |
+| Canonical product identity     | Control Plane |
+| Canonical variant identity     | Control Plane |
+| Medusa product ID              | Medusa        |
+| ERP item/product ID            | iDempiere     |
+| Payload content ID             | Payload       |
+| Commerce variant structure     | Medusa        |
+| Transactional sellability      | Medusa        |
+| Commerce price                 | Medusa        |
+| Promotion eligibility          | Medusa        |
+| Cart eligibility               | Medusa        |
+| Editorial title                | Payload       |
+| Long-form description          | Payload       |
+| Marketing media                | Payload       |
+| SEO content                    | Payload       |
+| Accounting classification      | iDempiere     |
+| Cost valuation                 | iDempiere     |
+| Enterprise inventory valuation | iDempiere     |
+| ERP procurement data           | iDempiere     |
+| Canonical mapping              | Control Plane |
 
 This matrix MAY be refined by later ADRs.
 
