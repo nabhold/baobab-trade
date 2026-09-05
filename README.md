@@ -39,12 +39,22 @@ Trade accepts commerce requests only after authoritative context resolution thro
 - `GET /health` — process liveness.
 - `GET /readiness` — configuration readiness, including Control Plane configuration.
 
+## Markets
+
+ZuriBeans launches in Uganda and South Africa as two first-class Baobab
+Markets on one codebase. See `docs/architecture/market-model.md` for how
+Market differs from Medusa Region, and run `npm run bootstrap:market` to
+idempotently provision each Market's Region, Sales Channel and Stock
+Location.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
 - `src/baobab/contracts` — temporary compatibility adapters with explicit Shared provenance.
 - `src/baobab/control-plane` — Control Plane client boundary.
 - `src/baobab/events` — versioned cross-engine envelopes and publishers.
+- `src/baobab/market` — Market configuration and engine-native mapping helpers.
+- `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.
 
