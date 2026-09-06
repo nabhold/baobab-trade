@@ -23,9 +23,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@medusajs/framework": "2.8.8",
-    "@medusajs/medusa": "2.8.8",
-    "@medusajs/utils": "2.8.8",
+    "@medusajs/framework": "2.20.1",
+    "@medusajs/medusa": "2.20.1",
+    "@medusajs/utils": "2.20.1",
     "awilix": "8.0.1",
     "pg": "8.13.1"
   },
