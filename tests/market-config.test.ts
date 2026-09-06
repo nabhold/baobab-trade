@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   getMarketBootstrapConfig,
   toMedusaCurrencyCode,
+  withAddedStoreCurrency,
   ZURIBEANS_LAUNCH_MARKETS,
   ZURIBEANS_SOUTH_AFRICA,
   ZURIBEANS_UGANDA,
@@ -48,5 +49,33 @@ describe("ZuriBeans launch Market configuration", () => {
   it("normalises ISO currency codes to Medusa's lowercase convention", () => {
     expect(toMedusaCurrencyCode("UGX")).toBe("ugx")
     expect(toMedusaCurrencyCode("ZAR")).toBe("zar")
+  })
+})
+
+describe("withAddedStoreCurrency", () => {
+  // Regression test: a live Medusa 2.20.1 run against a real store with no
+  // currencies yet failed with "There should be a default currency set for
+  // the store" because the first currency added was hardcoded to
+  // is_default: false. A Store must always have exactly one default.
+  it("makes the first currency added to an empty store the default", () => {
+    expect(withAddedStoreCurrency([], "ugx")).toEqual([{ currency_code: "ugx", is_default: true }])
+  })
+
+  it("does not displace an existing default when adding a second currency", () => {
+    const existing = [{ currency_code: "ugx", is_default: true }]
+    expect(withAddedStoreCurrency(existing, "zar")).toEqual([
+      { currency_code: "ugx", is_default: true },
+      { currency_code: "zar", is_default: false },
+    ])
+  })
+
+  it("preserves every existing currency rather than replacing the list", () => {
+    const existing = [
+      { currency_code: "ugx", is_default: true },
+      { currency_code: "usd", is_default: false },
+    ]
+    const result = withAddedStoreCurrency(existing, "zar")
+    expect(result).toHaveLength(3)
+    expect(result.map((c) => c.currency_code)).toEqual(["ugx", "usd", "zar"])
   })
 })
