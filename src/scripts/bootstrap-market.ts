@@ -1,13 +1,16 @@
 import { Modules } from "@medusajs/framework/utils"
-import type { ExecArgs } from "@medusajs/framework/types"
-import type { IRegionModuleService } from "@medusajs/types/dist/region/service"
-import type { ISalesChannelModuleService } from "@medusajs/types/dist/sales-channel/service"
-import type { IStockLocationService } from "@medusajs/types/dist/stock-location/service"
-import type { IStoreModuleService } from "@medusajs/types/dist/store/service"
+import type {
+  ExecArgs,
+  IRegionModuleService,
+  ISalesChannelModuleService,
+  IStockLocationService,
+  IStoreModuleService,
+} from "@medusajs/framework/types"
 import {
   ZURIBEANS_LAUNCH_MARKETS,
   getMarketBootstrapConfig,
   toMedusaCurrencyCode,
+  withAddedStoreCurrency,
   type MarketBootstrapConfig,
 } from "../baobab/market/market-config"
 import {
@@ -43,7 +46,7 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
     logger.info(message, { marketKey: config.marketKey, ...meta })
 
   // Store currency support.
-  const [store] = await storeService.listStores()
+  const [store] = await storeService.listStores({}, { relations: ["supported_currencies"] })
   if (store) {
     const currencyCode = toMedusaCurrencyCode(config.defaultCurrency)
     const alreadySupported = (store.supported_currencies ?? []).some(
@@ -51,13 +54,10 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
     )
     if (!alreadySupported) {
       await storeService.updateStores(store.id, {
-        supported_currencies: [
-          ...(store.supported_currencies ?? []).map((currency) => ({
-            currency_code: currency.currency_code,
-            is_default: currency.is_default,
-          })),
-          { currency_code: currencyCode, is_default: false },
-        ],
+        supported_currencies: withAddedStoreCurrency(
+          store.supported_currencies ?? [],
+          currencyCode,
+        ),
       })
       log("added market currency to store", { currencyCode })
     }

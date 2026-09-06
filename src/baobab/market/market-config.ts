@@ -43,6 +43,29 @@ export type MarketBootstrapConfig = {
 export const toMedusaCurrencyCode = (isoCurrencyCode: string): string =>
   isoCurrencyCode.toLowerCase()
 
+export type StoreSupportedCurrency = { currency_code: string; is_default: boolean }
+
+/**
+ * Computes the supported-currency list to write back to a Store after adding
+ * one new currency. A Medusa Store must always have exactly one default
+ * currency (`StoreModuleService.validateCreateRequest`), so the first
+ * currency ever added to a store with none yet has to become the default;
+ * once a default exists, a newly added currency must never displace it.
+ */
+export const withAddedStoreCurrency = (
+  existingCurrencies: readonly StoreSupportedCurrency[],
+  newCurrencyCode: string,
+): StoreSupportedCurrency[] => {
+  const hasDefault = existingCurrencies.some((currency) => currency.is_default)
+  return [
+    ...existingCurrencies.map((currency) => ({
+      currency_code: currency.currency_code,
+      is_default: currency.is_default,
+    })),
+    { currency_code: newCurrencyCode, is_default: !hasDefault },
+  ]
+}
+
 export const ZURIBEANS_UGANDA: MarketBootstrapConfig = {
   marketKey: "zuribeans_ug",
   displayName: "ZuriBeans Uganda",
