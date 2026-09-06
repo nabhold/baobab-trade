@@ -265,17 +265,17 @@ or equivalent documented package boundaries.
 
 The following concerns SHALL have named owners:
 
-| Concern | Logical Package |
-|---|---|
-| Context | `baobab/context` |
-| Capability resolution | `baobab/capabilities` |
-| Canonical mapping | `baobab/mapping` |
-| Outbox | `baobab/outbox` |
-| Event envelope | `baobab/events` |
-| Control Plane client | `adapters/control-plane` |
-| ERP integration | `adapters/idempiere` |
-| CMS integration | `adapters/payload` |
-| Identity integration | `adapters/identity` |
+| Concern               | Logical Package          |
+| --------------------- | ------------------------ |
+| Context               | `baobab/context`         |
+| Capability resolution | `baobab/capabilities`    |
+| Canonical mapping     | `baobab/mapping`         |
+| Outbox                | `baobab/outbox`          |
+| Event envelope        | `baobab/events`          |
+| Control Plane client  | `adapters/control-plane` |
+| ERP integration       | `adapters/idempiere`     |
+| CMS integration       | `adapters/payload`       |
+| Identity integration  | `adapters/identity`      |
 
 ---
 

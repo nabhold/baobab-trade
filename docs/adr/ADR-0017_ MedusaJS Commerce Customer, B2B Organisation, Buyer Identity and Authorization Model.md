@@ -1318,15 +1318,15 @@ Attribute authority SHALL be explicit.
 
 For example:
 
-| Attribute | Typical Authority |
-|---|---|
-| Commerce account state | Medusa |
-| Buyer membership | Medusa/B2B capability |
-| ERP Business Partner number | iDempiere |
-| Credit balance | iDempiere |
-| Receivables | iDempiere |
-| Canonical organisation ID | Control Plane |
-| Authentication credential | Identity Provider |
+| Attribute                   | Typical Authority     |
+| --------------------------- | --------------------- |
+| Commerce account state      | Medusa                |
+| Buyer membership            | Medusa/B2B capability |
+| ERP Business Partner number | iDempiere             |
+| Credit balance              | iDempiere             |
+| Receivables                 | iDempiere             |
+| Canonical organisation ID   | Control Plane         |
+| Authentication credential   | Identity Provider     |
 
 ---
 
