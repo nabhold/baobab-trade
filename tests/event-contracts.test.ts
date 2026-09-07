@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   B2B_EVENT_TYPES,
+  INVENTORY_EVENT_TYPES,
   createPlatformTradeEvent,
   createTenantTradeEvent,
   isValidCloudEvent,
@@ -62,6 +63,14 @@ describe("Baobab CloudEvents envelope", () => {
     for (const type of Object.values(B2B_EVENT_TYPES)) {
       const event = createTenantTradeEvent(tenantContext, { ...baseInput, type })
       expect(isValidCloudEvent(event)).toBe(true)
+    }
+  })
+
+  it("uses canonical versioned names for Gate 7 inventory facts", () => {
+    for (const type of Object.values(INVENTORY_EVENT_TYPES)) {
+      expect(isValidCloudEvent(createTenantTradeEvent(tenantContext, { ...baseInput, type }))).toBe(
+        true,
+      )
     }
   })
 })
