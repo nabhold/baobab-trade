@@ -113,6 +113,8 @@ Trade's event envelope aligns conceptually with Shared's CloudEvents profile, bu
 
 The local runner used Node 24, while Trade declares `>=20.19.0 <23` and ZuriBeans declares `>=22.14.0 <23`. Node results are useful but do not replace CI on the repositories' supported Node versions.
 
+PR CI subsequently confirmed that the repository-contract foundation check passes, while the foundation vulnerability scan fails on the pre-existing transitive `lodash 4.17.23` dependency (`CVE-2026-4800`, HIGH; scanner-reported fixed version `4.18.0`). Gate 1 must resolve or formally assess this dependency finding; it must not be waived merely to obtain a green pipeline.
+
 ## 10. Gate backlog and acceptance order
 
 | Next gate | Deliverable | Exit condition |
@@ -131,6 +133,7 @@ The local runner used Node 24, while Trade declares `>=20.19.0 <23` and ZuriBean
 3. No production payment, fulfilment, notification, file, or tax provider is approved. Interfaces may be implemented first; credentials and provider choice belong outside domain logic.
 4. The initial catalogue is small. Meilisearch should be added only if its operational cost is justified; search remains a projection either way.
 5. ZuriBeans' supplier database must not evolve into a second commerce or ERP authority.
+6. The current dependency graph fails the shared HIGH/CRITICAL vulnerability gate on `lodash`; remediation must preserve Medusa compatibility and lockfile reproducibility.
 
 ## 12. Gate 0 conclusion
 
