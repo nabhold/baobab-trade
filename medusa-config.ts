@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from "@medusajs/framework/utils"
+import { getInfrastructureModules } from "./src/baobab/config/infrastructure"
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
@@ -21,6 +22,6 @@ export default defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "development-cookie-secret",
     },
   },
-  modules: [],
+  modules: getInfrastructureModules(),
   plugins: [],
 })
