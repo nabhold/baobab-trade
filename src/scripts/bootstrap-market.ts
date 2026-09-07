@@ -1,4 +1,5 @@
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
+import { linkSalesChannelsToStockLocationWorkflow } from "@medusajs/core-flows"
 import type {
   ExecArgs,
   IFulfillmentModuleService,
@@ -180,16 +181,15 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
   }
 
   if (stockLocationCreated) {
-    await remoteLink.create([
-      {
-        [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
-        [Modules.SALES_CHANNEL]: { sales_channel_id: salesChannel.id },
-      },
-      ...config.shipping.providerIds.map((providerId) => ({
+    await linkSalesChannelsToStockLocationWorkflow(container).run({
+      input: { id: stockLocation.id, add: [salesChannel.id], remove: [] },
+    })
+    await remoteLink.create(
+      config.shipping.providerIds.map((providerId) => ({
         [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
         [Modules.FULFILLMENT]: { fulfillment_provider_id: providerId },
       })),
-    ])
+    )
     log("bound stock location to B2B channel and fulfillment providers")
   }
 

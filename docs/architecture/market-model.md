@@ -58,12 +58,12 @@ reconciliation job can find what Trade already provisioned.
 | Market key (candidate) | `zuribeans_ug`                              | `zuribeans_za`                              |
 | Country                | UG                                          | ZA                                          |
 | Default currency       | UGX                                         | ZAR                                         |
-| Sales Channel          | ZuriBeans B2B (shared)                       | ZuriBeans B2B (shared)                       |
+| Sales Channel          | ZuriBeans B2B (shared)                      | ZuriBeans B2B (shared)                      |
 | Stock Location         | development placeholder, Kampala            | development placeholder, Johannesburg       |
 | Payment                | `NATIVE`, Medusa system default placeholder | `NATIVE`, Medusa system default placeholder |
-| Shipping context       | Uganda domestic service zone                 | South Africa domestic service zone            |
+| Shipping context       | Uganda domestic service zone                | South Africa domestic service zone          |
 | Fulfilment             | `NATIVE`, Medusa manual provider            | `NATIVE`, Medusa manual provider            |
-| Tax                    | System provider; no rates hardcoded          | System provider; no rates hardcoded           |
+| Tax                    | System provider; no rates hardcoded         | System provider; no rates hardcoded         |
 
 Gate 4 binds Medusa's system payment, tax, and manual fulfilment providers so
 the projections are executable without pretending that a production provider

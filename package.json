@@ -28,6 +28,7 @@
     "verify:infrastructure": "medusa exec ./src/scripts/verify-infrastructure.ts"
   },
   "dependencies": {
+    "@medusajs/core-flows": "2.20.1",
     "@medusajs/framework": "2.20.1",
     "@medusajs/medusa": "2.20.1",
     "@medusajs/utils": "2.20.1",
