@@ -8,7 +8,7 @@ const PROBES = [
   ["Workflow Engine", Modules.WORKFLOW_ENGINE, "listWorkflowExecutions"],
   ["Locking", Modules.LOCKING, "acquire"],
   ["Caching", Modules.CACHING, "get"],
-  ["File", Modules.FILE, "uploadFiles"],
+  ["File", Modules.FILE, "createFiles"],
   ["Notification", Modules.NOTIFICATION, "createNotifications"],
 ] as const
 
