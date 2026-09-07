@@ -29,6 +29,10 @@ jobs:
         run: npm run typecheck
       - name: Test
         run: npm test
+      - name: Contract tests
+        run: npm run test:contract
+      - name: Context isolation tests
+        run: npm run test:isolation
       - name: Build
         run: npm run build
       - name: Validate architecture declarations

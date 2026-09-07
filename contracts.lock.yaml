@@ -7,7 +7,7 @@ consumer:
 sources:
   shared:
     repository: "nabhold/shared"
-    commit: "c518b9aa7be1e67c2b9d360c75a97123ee47382f"
+    commit: "0d61ba0ffa1ede9b0a0a27321792e3fd4849921f"
     contracts:
       development_environment:
         path: "contracts/development-environment/schema.yaml"
@@ -53,6 +53,8 @@ sources:
     api_contract_status: "published-in-nabhold/shared"
     context_resolution_endpoint: "POST /v1/context/resolve"
     market_endpoint: "GET /v1/markets/{market_id}"
+    mapping_resolution_endpoint: "POST /v1/resolution/mappings"
+    implementation_commit_audited: "328e11450a242b99cee3c7ab5014130d6f725741"
   event_envelope:
     owner: "nabhold/shared"
     publication_status: "published"
