@@ -5,7 +5,7 @@
   "description": "Baobab Trade Engine - independently deployable MedusaJS commerce engine for the Baobab Platform.",
   "license": "GPL-3.0-or-later",
   "engines": {
-    "node": ">=20.19.0 <23"
+    "node": ">=24 <25"
   },
   "packageManager": "npm@10.8.2",
   "scripts": {
@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify:core-modules": "medusa exec ./src/scripts/verify-core-modules.ts"
+    "verify:core-modules": "medusa exec ./src/scripts/verify-core-modules.ts",
+    "verify:infrastructure": "medusa exec ./src/scripts/verify-infrastructure.ts"
   },
   "dependencies": {
     "@medusajs/framework": "2.20.1",
