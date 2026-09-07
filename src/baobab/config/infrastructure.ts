@@ -29,7 +29,6 @@ export const buildProductionInfrastructureModules = (
       options: {
         redisUrl,
         queueName: env.REDIS_EVENT_QUEUE || "baobab-trade-events",
-        redisOptions: { keyPrefix: `${redisPrefix}:event:` },
       },
     },
     {
@@ -38,7 +37,6 @@ export const buildProductionInfrastructureModules = (
         redis: {
           redisUrl,
           queueName: env.REDIS_WORKFLOW_QUEUE || "baobab-trade-workflows",
-          redisOptions: { keyPrefix: `${redisPrefix}:workflow:` },
         },
       },
     },
