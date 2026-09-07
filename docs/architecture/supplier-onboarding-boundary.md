@@ -9,7 +9,7 @@ repository is well positioned to cause, and changes no code here.
 
 `src/modules/b2b` models organisations that buy **from** the platform
 (ZuriBeans' wholesale buyers, ADR-0017) — buyer memberships, roles, spend
-limits, approval policies, and the buyer's own purchase-order *references*.
+limits, approval policies, and the buyer's own purchase-order _references_.
 Supplier onboarding is the opposite direction: organisations that sell
 **to** a Baobab estate. Nothing in `src/modules/b2b` represents a supplier,
 a vendor, or a platform-issued purchase order, and this note does not add
@@ -23,7 +23,7 @@ ZuriBeans estate has its own, separate supplier-application workflow with
 its own schema (`nabhold/zuribeans`, ADR-0006 in that repository) — "sourcing
 intake, not a Medusa customer model... must remain distinct from buyer
 organisations." `nabhold/shared`'s new `@nabhold/supplier-domain` package
-generalizes that same proven pattern so a *second* estate (Thamani) does
+generalizes that same proven pattern so a _second_ estate (Thamani) does
 not have to duplicate it from scratch; it does not change or consolidate
 ZuriBeans' own implementation, and this repository is not where either
 estate's supplier data lives.
