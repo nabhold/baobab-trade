@@ -147,6 +147,37 @@ export const PAYMENT_EVENT_TYPES = {
   reconciled: "com.nabhold.commerce.payment.reconciled.v1",
 } as const
 
+export const FULFILMENT_EVENT_TYPES = {
+  requested: "com.nabhold.commerce.fulfilment.requested.v1",
+  accepted: "com.nabhold.commerce.fulfilment.accepted.v1",
+  dispatched: "com.nabhold.commerce.fulfilment.dispatched.v1",
+  delivered: "com.nabhold.commerce.fulfilment.delivered.v1",
+  exception: "com.nabhold.commerce.fulfilment.exception.v1",
+  reconciled: "com.nabhold.commerce.fulfilment.reconciled.v1",
+} as const
+
+export type FulfilmentEventPayload = {
+  fulfilment_reference: string
+  order_reference: string
+  organisation_id: string
+  market_key: string
+  legal_seller_key: string
+  source_location_key: string
+  mode: "LOCAL_DELIVERY" | "BULK_FREIGHT" | "CROSS_BORDER" | "CUSTOMER_COLLECTION"
+  provider_key: string
+  status: string
+  shipment_reference?: string
+  carrier_reference?: string
+  tracking_reference?: string
+  export_reference?: string
+  customs_reference?: string
+  incoterm?: string
+  gross_weight_kg: number
+  package_count: number
+  dispatch_date?: string
+  delivery_date?: string
+}
+
 export type PaymentEventPayload = {
   payment_reference: string
   order_reference: string

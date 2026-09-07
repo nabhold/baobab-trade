@@ -3,6 +3,7 @@ import {
   B2B_EVENT_TYPES,
   INVENTORY_EVENT_TYPES,
   PAYMENT_EVENT_TYPES,
+  FULFILMENT_EVENT_TYPES,
   createPlatformTradeEvent,
   createTenantTradeEvent,
   isValidCloudEvent,
@@ -77,6 +78,14 @@ describe("Baobab CloudEvents envelope", () => {
 
   it("uses canonical versioned names for Gate 8 payment facts", () => {
     for (const type of Object.values(PAYMENT_EVENT_TYPES)) {
+      expect(isValidCloudEvent(createTenantTradeEvent(tenantContext, { ...baseInput, type }))).toBe(
+        true,
+      )
+    }
+  })
+
+  it("uses canonical versioned names for Gate 9 fulfilment facts", () => {
+    for (const type of Object.values(FULFILMENT_EVENT_TYPES)) {
       expect(isValidCloudEvent(createTenantTradeEvent(tenantContext, { ...baseInput, type }))).toBe(
         true,
       )
