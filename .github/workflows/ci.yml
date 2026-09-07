@@ -113,6 +113,12 @@ jobs:
       - name: Verify Gate 8 payment lifecycle and ERP reconciliation
         run: npm run verify:payments
 
+      - name: Bootstrap Gate 9 fulfilment policies
+        run: npm run bootstrap:fulfilment
+
+      - name: Verify Gate 9 fulfilment, tracking, and reconciliation
+        run: npm run verify:fulfilment
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

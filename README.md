@@ -69,6 +69,11 @@ regional provider boundaries, idempotent payment lifecycle records, and explicit
 Commerce-to-iDempiere reconciliation with `npm run bootstrap:payments`. See
 `docs/architecture/zuribeans-payments.md`.
 
+Gate 9 adds local, bulk, collection, and cross-border fulfilment policies,
+idempotent execution requests, tracking/shipment projections, and logistics
+reconciliation with `npm run bootstrap:fulfilment`. See
+`docs/architecture/zuribeans-fulfilment.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -81,9 +86,11 @@ Commerce-to-iDempiere reconciliation with `npm run bootstrap:payments`. See
 - `src/baobab/pricing` — replaceable pricing decision boundary.
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
+- `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
 - `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
 - `src/modules/inventory-bridge` — ERP projections and canonical location mappings.
 - `src/modules/payment-bridge` — payment policy, status, and reconciliation persistence.
+- `src/modules/fulfilment-bridge` — fulfilment, tracking, and logistics reconciliation persistence.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.

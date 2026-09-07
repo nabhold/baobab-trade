@@ -1,0 +1,35 @@
+import { model } from "@medusajs/framework/utils"
+const CommerceFulfilment = model.define(
+  { name: "commerce_fulfilment", tableName: "commerce_fulfilment" },
+  {
+    id: model.id({ prefix: "ful" }).primaryKey(),
+    fulfilment_reference: model.text().unique(),
+    order_reference: model.text().index(),
+    organisation_id: model.text().index(),
+    market_key: model.text().index(),
+    legal_seller_key: model.text(),
+    source_location_key: model.text(),
+    mode: model.enum(["LOCAL_DELIVERY", "BULK_FREIGHT", "CROSS_BORDER", "CUSTOMER_COLLECTION"]),
+    provider_key: model.text(),
+    status: model.enum([
+      "REQUESTED",
+      "ACCEPTED",
+      "ALLOCATED",
+      "DISPATCHED",
+      "DELIVERED",
+      "CANCELLED",
+      "EXCEPTION",
+      "RECONCILIATION_REQUIRED",
+    ]),
+    shipment_metadata: model.json(),
+    shipment_reference: model.text().nullable(),
+    carrier_reference: model.text().nullable(),
+    tracking_reference: model.text().nullable(),
+    tracking_url: model.text().nullable(),
+    dispatch_date: model.dateTime().nullable(),
+    delivery_date: model.dateTime().nullable(),
+    source_idempotency_key: model.text().unique(),
+    correlation_id: model.text(),
+  },
+)
+export default CommerceFulfilment
