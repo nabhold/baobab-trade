@@ -17,6 +17,10 @@ export default async function verifyB2BModule({ container }: ExecArgs): Promise<
     b2b.listDeliverySites({}, { take: 1 }),
     b2b.listPurchaseApprovals({}, { take: 1 }),
     b2b.listPurchaseOrderReferences({}, { take: 1 }),
+    b2b.listProductTradeProfiles({}, { take: 1 }),
+    b2b.listMarketProductEligibilities({}, { take: 1 }),
+    b2b.listPurchaseConstraints({}, { take: 1 }),
+    b2b.listContractPrices({}, { take: 1 }),
   ])
 
   container.resolve("logger").info("Verified Gate 5 B2B module persistence")

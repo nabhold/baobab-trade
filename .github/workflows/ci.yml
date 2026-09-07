@@ -95,6 +95,12 @@ jobs:
       - name: Verify Gate 5 B2B module persistence
         run: npm run verify:b2b-module
 
+      - name: Bootstrap Gate 6 ZuriBeans catalogue and pricing
+        run: npm run bootstrap:catalogue
+
+      - name: Verify Gate 6 catalogue and pricing projections
+        run: npm run verify:catalogue
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
