@@ -64,6 +64,11 @@ Gate 7 provisions six canonical inventory locations, Medusa inventory levels,
 reservation checks, and replay-safe iDempiere projection/reconciliation records
 with `npm run bootstrap:inventory`. See `docs/architecture/zuribeans-inventory.md`.
 
+Gate 8 adds per-Market payment policies, bank/manual and invoice-terms flows,
+regional provider boundaries, idempotent payment lifecycle records, and explicit
+Commerce-to-iDempiere reconciliation with `npm run bootstrap:payments`. See
+`docs/architecture/zuribeans-payments.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -75,8 +80,10 @@ with `npm run bootstrap:inventory`. See `docs/architecture/zuribeans-inventory.m
 - `src/baobab/catalogue` — governed ZuriBeans product and bootstrap price definitions.
 - `src/baobab/pricing` — replaceable pricing decision boundary.
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
+- `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
 - `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
 - `src/modules/inventory-bridge` — ERP projections and canonical location mappings.
+- `src/modules/payment-bridge` — payment policy, status, and reconciliation persistence.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.

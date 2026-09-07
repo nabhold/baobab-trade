@@ -140,6 +140,29 @@ export const INVENTORY_EVENT_TYPES = {
   released: "com.nabhold.commerce.inventory.released.v1",
 } as const
 
+export const PAYMENT_EVENT_TYPES = {
+  initiated: "com.nabhold.commerce.payment.initiated.v1",
+  statusChanged: "com.nabhold.commerce.payment.status-changed.v1",
+  reconciliationRequired: "com.nabhold.commerce.payment.reconciliation-required.v1",
+  reconciled: "com.nabhold.commerce.payment.reconciled.v1",
+} as const
+
+export type PaymentEventPayload = {
+  payment_reference: string
+  order_reference: string
+  organisation_id: string
+  market_key: string
+  legal_seller_key: string
+  method: "BANK_TRANSFER" | "MANUAL_SETTLEMENT" | "INVOICE_TERMS" | "SELECTED_PSP"
+  terms: "PREPAID" | "DUE_ON_RECEIPT" | "NET_7" | "NET_14" | "NET_30"
+  provider_key: string
+  provider_reference?: string
+  currency: string
+  amount_minor: number
+  status: string
+  erp_reconciliation_status?: "MATCHED" | "VARIANCE" | "PENDING_ERP" | "RESOLVED"
+}
+
 export type InventoryEventPayload = {
   inventory_item_id: string
   stock_location_id: string

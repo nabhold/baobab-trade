@@ -107,6 +107,12 @@ jobs:
       - name: Verify Gate 7 inventory and reservations
         run: npm run verify:inventory
 
+      - name: Bootstrap Gate 8 payment policies
+        run: npm run bootstrap:payments
+
+      - name: Verify Gate 8 payment lifecycle and ERP reconciliation
+        run: npm run verify:payments
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
