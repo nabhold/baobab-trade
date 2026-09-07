@@ -19,30 +19,30 @@ The implementation order is therefore:
 
 ## 2. Audited revisions
 
-| Repository | Revision | Role |
-| --- | --- | --- |
-| `nabhold/baobab-trade` | `bd4074c` | Medusa commerce execution |
-| `nabhold/baobab-cp` | `328e114` | Context, canonical identity, Market and capability authority |
-| `nabhold/baobab-erp` | `e6e4263` | iDempiere integration and enterprise consequence authority |
-| `nabhold/shared` | `0d61ba0` | Canonical schemas and governance contracts |
-| `nabhold/zuribeans` | `8c0b152` | B2B digital estate and intended beneficiary |
+| Repository             | Revision  | Role                                                         |
+| ---------------------- | --------- | ------------------------------------------------------------ |
+| `nabhold/baobab-trade` | `bd4074c` | Medusa commerce execution                                    |
+| `nabhold/baobab-cp`    | `328e114` | Context, canonical identity, Market and capability authority |
+| `nabhold/baobab-erp`   | `e6e4263` | iDempiere integration and enterprise consequence authority   |
+| `nabhold/shared`       | `0d61ba0` | Canonical schemas and governance contracts                   |
+| `nabhold/zuribeans`    | `8c0b152` | B2B digital estate and intended beneficiary                  |
 
 The Trade contract lock currently pins Shared at `c518b9aa7be1e67c2b9d360c75a97123ee47382f`. Updating that pin is a separate, reviewable contract-consumption change; this report does not silently move it.
 
 ## 3. Current Medusa posture
 
-| Area | Evidence | Gate status |
-| --- | --- | --- |
-| Medusa version | `@medusajs/framework`, `@medusajs/medusa`, and `@medusajs/utils` are pinned to `2.20.1` | Ready for Gate 1 verification |
-| Core modules | `medusa-config.ts` declares no overrides, so Medusa's default modules provide the initial Product, Pricing, Customer, Cart, Order, Inventory, Stock Location, Region, Sales Channel, Currency, Payment, Fulfillment, Tax, Auth, API Key and Store capabilities | Present, runtime proof still required |
-| Plugins | No plugins configured | Deliberate but incomplete for production |
-| Custom modules | None | B2B and outbox modules not implemented |
-| Migrations | No repository-owned Trade migrations | B2B and outbox schemas not implemented |
-| Workflows | No repository-owned custom workflows | Approval and order-boundary workflows not implemented |
-| Subscribers | No repository-owned subscribers | Canonical event publication not implemented |
-| API routes | `/health` and `/readiness` only | No B2B or protected Commerce routes |
-| Admin extensions | None | Not currently required for Gate 1 |
-| Seed | Intentionally empty | Gate 18 not started |
+| Area             | Evidence                                                                                                                                                                                                                                                       | Gate status                                           |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Medusa version   | `@medusajs/framework`, `@medusajs/medusa`, and `@medusajs/utils` are pinned to `2.20.1`                                                                                                                                                                        | Ready for Gate 1 verification                         |
+| Core modules     | `medusa-config.ts` declares no overrides, so Medusa's default modules provide the initial Product, Pricing, Customer, Cart, Order, Inventory, Stock Location, Region, Sales Channel, Currency, Payment, Fulfillment, Tax, Auth, API Key and Store capabilities | Present, runtime proof still required                 |
+| Plugins          | No plugins configured                                                                                                                                                                                                                                          | Deliberate but incomplete for production              |
+| Custom modules   | None                                                                                                                                                                                                                                                           | B2B and outbox modules not implemented                |
+| Migrations       | No repository-owned Trade migrations                                                                                                                                                                                                                           | B2B and outbox schemas not implemented                |
+| Workflows        | No repository-owned custom workflows                                                                                                                                                                                                                           | Approval and order-boundary workflows not implemented |
+| Subscribers      | No repository-owned subscribers                                                                                                                                                                                                                                | Canonical event publication not implemented           |
+| API routes       | `/health` and `/readiness` only                                                                                                                                                                                                                                | No B2B or protected Commerce routes                   |
+| Admin extensions | None                                                                                                                                                                                                                                                           | Not currently required for Gate 1                     |
+| Seed             | Intentionally empty                                                                                                                                                                                                                                            | Gate 18 not started                                   |
 
 ## 4. Existing Baobab integration
 
@@ -68,15 +68,15 @@ No trusted legal-seller binding is currently returned and enforced through the f
 
 ## 6. Infrastructure findings
 
-| Concern | Development state | Production gap |
-| --- | --- | --- |
-| PostgreSQL | Dedicated Trade database in Compose | Compose uses PostgreSQL 16; deployment ownership remains external |
-| Redis URL | Present in configuration and Compose | Explicit Redis Event, Workflow, Locking, and Cache module wiring is absent |
-| Event delivery | In-memory publisher abstraction | No transactional outbox, retry worker, or dead-letter/reconciliation path |
-| Files | No provider configured | S3-compatible provider required |
-| Notifications | No provider configured | Provider-neutral production email integration required |
-| Search | No provider configured | Decide whether PostgreSQL search suffices for the initial ten-product catalogue before adding Meilisearch |
-| Observability | Structured application logger and health endpoints | Metrics, traces, and dependency diagnostics remain incomplete |
+| Concern        | Development state                                  | Production gap                                                                                            |
+| -------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| PostgreSQL     | Dedicated Trade database in Compose                | Compose uses PostgreSQL 16; deployment ownership remains external                                         |
+| Redis URL      | Present in configuration and Compose               | Explicit Redis Event, Workflow, Locking, and Cache module wiring is absent                                |
+| Event delivery | In-memory publisher abstraction                    | No transactional outbox, retry worker, or dead-letter/reconciliation path                                 |
+| Files          | No provider configured                             | S3-compatible provider required                                                                           |
+| Notifications  | No provider configured                             | Provider-neutral production email integration required                                                    |
+| Search         | No provider configured                             | Decide whether PostgreSQL search suffices for the initial ten-product catalogue before adding Meilisearch |
+| Observability  | Structured application logger and health endpoints | Metrics, traces, and dependency diagnostics remain incomplete                                             |
 
 Production must fail closed when required provider configuration is absent. Development fallbacks must be explicit and must never masquerade as production readiness.
 
@@ -103,13 +103,13 @@ Trade's event envelope aligns conceptually with Shared's CloudEvents profile, bu
 
 ## 9. Verification baseline
 
-| Repository | Command/result |
-| --- | --- |
-| Trade | Format, lint, typecheck, 24 tests, and Medusa build passed |
-| ZuriBeans | Lint, typecheck, 50 tests passed; 3 database-backed tests skipped; Next.js production build passed |
-| ERP | 42 Python/JSON validation checks passed; Maven was unavailable, so the OSGi extension build was skipped |
-| Control Plane | Not executed in this runner because Go is unavailable |
-| Shared | Contract validators not executed in this runner because Ruby is unavailable |
+| Repository    | Command/result                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| Trade         | Format, lint, typecheck, 24 tests, and Medusa build passed                                              |
+| ZuriBeans     | Lint, typecheck, 50 tests passed; 3 database-backed tests skipped; Next.js production build passed      |
+| ERP           | 42 Python/JSON validation checks passed; Maven was unavailable, so the OSGi extension build was skipped |
+| Control Plane | Not executed in this runner because Go is unavailable                                                   |
+| Shared        | Contract validators not executed in this runner because Ruby is unavailable                             |
 
 The local runner used Node 24, while Trade declares `>=20.19.0 <23` and ZuriBeans declares `>=22.14.0 <23`. Node results are useful but do not replace CI on the repositories' supported Node versions.
 
@@ -117,14 +117,14 @@ PR CI subsequently confirmed that the repository-contract foundation check passe
 
 ## 10. Gate backlog and acceptance order
 
-| Next gate | Deliverable | Exit condition |
-| --- | --- | --- |
-| Gate 1 | Executable core-module health probe and CI evidence | Required default modules resolve and basic create/read flows pass against PostgreSQL/Redis |
-| Gate 2 | Environment-driven Redis module wiring and production provider policy | Production cannot boot with volatile critical providers; S3/email/search decisions are documented and tested |
-| Gate 3 | Canonical ZuriBeans Context and Market integration across Shared, CP, and Trade | Active UG/ZA Market IDs, legal seller, estate, engine instance and capabilities are resolved from trusted Context |
-| Gate 4 | Idempotent UG/ZA Commerce projections | Regions, one justified B2B Sales Channel, currencies, locations and provider bindings reconcile without hardcoded Medusa IDs |
-| Gate 5 | Trade-owned B2B module and migrations | Cross-organisation reads/writes fail server-side; roles, terms, sites, tax registrations, approvals and PO rules are structured |
-| Gate 6 onward | Catalogue, pricing, inventory, payments, fulfilment, tax, trade metadata, ERP, outbox and security | Each gate's contract and isolation tests pass before the next gate begins |
+| Next gate     | Deliverable                                                                                        | Exit condition                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Gate 1        | Executable core-module health probe and CI evidence                                                | Required default modules resolve and basic create/read flows pass against PostgreSQL/Redis                                      |
+| Gate 2        | Environment-driven Redis module wiring and production provider policy                              | Production cannot boot with volatile critical providers; S3/email/search decisions are documented and tested                    |
+| Gate 3        | Canonical ZuriBeans Context and Market integration across Shared, CP, and Trade                    | Active UG/ZA Market IDs, legal seller, estate, engine instance and capabilities are resolved from trusted Context               |
+| Gate 4        | Idempotent UG/ZA Commerce projections                                                              | Regions, one justified B2B Sales Channel, currencies, locations and provider bindings reconcile without hardcoded Medusa IDs    |
+| Gate 5        | Trade-owned B2B module and migrations                                                              | Cross-organisation reads/writes fail server-side; roles, terms, sites, tax registrations, approvals and PO rules are structured |
+| Gate 6 onward | Catalogue, pricing, inventory, payments, fulfilment, tax, trade metadata, ERP, outbox and security | Each gate's contract and isolation tests pass before the next gate begins                                                       |
 
 ## 11. Risks requiring explicit decisions
 

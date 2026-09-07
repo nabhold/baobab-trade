@@ -3,6 +3,7 @@ export type BaobabTradeEnvironment = {
   controlPlaneBaseUrl?: string
   controlPlaneContextPath: string
   controlPlaneMarketPathTemplate: string
+  controlPlaneMappingResolutionPath: string
   controlPlaneProductId: string
   erpApiBaseUrl?: string
   pulseApiBaseUrl?: string
@@ -26,6 +27,8 @@ export const getBaobabTradeEnvironment = (): BaobabTradeEnvironment => ({
   controlPlaneContextPath: process.env.BAOBAB_CONTROL_PLANE_CONTEXT_PATH || "/v1/context/resolve",
   controlPlaneMarketPathTemplate:
     process.env.BAOBAB_CONTROL_PLANE_MARKET_PATH_TEMPLATE || "/v1/markets/{market_id}",
+  controlPlaneMappingResolutionPath:
+    process.env.BAOBAB_CONTROL_PLANE_MAPPING_RESOLUTION_PATH || "/v1/resolution/mappings",
   controlPlaneProductId: process.env.BAOBAB_CONTROL_PLANE_PRODUCT_ID || "baobab-trade",
   erpApiBaseUrl: process.env.BAOBAB_ERP_API_BASE_URL,
   pulseApiBaseUrl: process.env.BAOBAB_PULSE_API_BASE_URL,

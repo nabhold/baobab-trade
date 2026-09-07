@@ -30,6 +30,7 @@ export type MappingType =
   | "SUCCESSOR"
 
 export type ExternalReference = {
+  external_reference_id: string
   system_namespace: string
   engine_id: string
   engine_instance_id?: string | null
@@ -38,6 +39,63 @@ export type ExternalReference = {
   native_key?: string | null
   source_authority: "engine" | "external-sync" | "manual-import" | "reconciliation"
   status: "active" | "unverified" | "suspect" | "orphan" | "archived"
+}
+
+export type MappingResolutionRequest = {
+  canonical_entity_id: string
+  target_capability?: string
+  target_system?: string
+  context: import("./tenant-context").RawContextResolutionResponse
+  effective_timestamp?: string | null
+}
+
+export type MappingResolutionResponse = {
+  mapping_id: string
+  canonical_entity_id: string
+  external_reference_id: string
+  scope_id?: string
+  status: "ACTIVE"
+  resolution_reason:
+    | "active_binding"
+    | "scope_matched"
+    | "temporal_valid"
+    | "priority_applied"
+    | "default_mapping"
+    | "fallback_applied"
+  effective_timestamp: string
+  mapping_version?: number
+  resolved_at?: string
+  cached?: boolean
+}
+
+const matches = (value: unknown, pattern: RegExp): value is string =>
+  typeof value === "string" && pattern.test(value)
+
+export const isCanonicalEntityId = (value: unknown): value is string =>
+  matches(value, /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/)
+
+export const isValidMappingResolutionResponse = (
+  candidate: unknown,
+): candidate is MappingResolutionResponse => {
+  if (typeof candidate !== "object" || candidate === null) return false
+  const value = candidate as Partial<MappingResolutionResponse>
+  return (
+    matches(value.mapping_id, /^map_[a-z0-9]{4,59}$/) &&
+    isCanonicalEntityId(value.canonical_entity_id) &&
+    matches(value.external_reference_id, /^ref_[a-z0-9]{4,59}$/) &&
+    value.status === "ACTIVE" &&
+    typeof value.resolution_reason === "string" &&
+    [
+      "active_binding",
+      "scope_matched",
+      "temporal_valid",
+      "priority_applied",
+      "default_mapping",
+      "fallback_applied",
+    ].includes(value.resolution_reason) &&
+    typeof value.effective_timestamp === "string" &&
+    !Number.isNaN(Date.parse(value.effective_timestamp))
+  )
 }
 
 /**

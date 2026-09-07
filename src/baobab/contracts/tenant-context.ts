@@ -79,6 +79,20 @@ export const fromContextResolutionResponse = (
   correlationId: raw.correlation_id,
 })
 
+export const toContextResolutionResponse = (
+  context: BaobabTenantContext,
+): RawContextResolutionResponse => ({
+  tenant_id: context.tenantId,
+  entity_id: context.entityId,
+  lifecycle_status: context.lifecycleStatus,
+  product_id: context.productId,
+  entitled: context.entitled,
+  entitlement_tier: context.entitlementTier,
+  cache_ttl_seconds: context.cacheTtlSeconds,
+  resolved_at: context.resolvedAt,
+  correlation_id: context.correlationId,
+})
+
 /**
  * Fails closed per contracts.lock.yaml `fail_on_unresolved_tenant_context`.
  * The Control Plane only returns 200 for an active, entitled tenant, so a

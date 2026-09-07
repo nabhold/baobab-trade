@@ -6,10 +6,21 @@ import {
 } from "../contracts/tenant-context"
 import { isProblemDetails, ControlPlaneProblemError } from "../contracts/problem-details"
 import { isValidMarket, type BaobabMarket } from "../contracts/market"
+import {
+  isCanonicalEntityId,
+  isValidMappingResolutionResponse,
+  type MappingResolutionRequest,
+  type MappingResolutionResponse,
+} from "../contracts/canonical-mapping"
 
 export interface ControlPlaneClient {
   resolveContext(accessToken: string, correlationId: string): Promise<BaobabTenantContext>
   getMarket(marketId: string, accessToken: string, correlationId: string): Promise<BaobabMarket>
+  resolveMapping(
+    request: MappingResolutionRequest,
+    accessToken: string,
+    correlationId: string,
+  ): Promise<MappingResolutionResponse>
 }
 
 export type HttpControlPlaneClientOptions = {
@@ -17,6 +28,7 @@ export type HttpControlPlaneClientOptions = {
   contextPath: string
   productId: string
   marketPathTemplate?: string
+  mappingResolutionPath?: string
   timeoutMs?: number
   now?: () => number
 }
@@ -47,6 +59,7 @@ export class HttpControlPlaneClient implements ControlPlaneClient {
   private readonly contextPath: string
   private readonly productId: string
   private readonly marketPathTemplate: string
+  private readonly mappingResolutionPath: string
   private readonly timeoutMs: number
   private readonly now: () => number
   private readonly contextCache = new Map<string, CachedContext>()
@@ -57,6 +70,9 @@ export class HttpControlPlaneClient implements ControlPlaneClient {
     this.productId = options.productId
     this.marketPathTemplate = withLeadingSlash(
       options.marketPathTemplate ?? "/v1/markets/{market_id}",
+    )
+    this.mappingResolutionPath = withLeadingSlash(
+      options.mappingResolutionPath ?? "/v1/resolution/mappings",
     )
     this.timeoutMs = options.timeoutMs ?? 3000
     this.now = options.now ?? Date.now
@@ -139,6 +155,41 @@ export class HttpControlPlaneClient implements ControlPlaneClient {
     const candidate: unknown = await response.json()
     if (!isValidMarket(candidate)) {
       throw new Error("Control Plane returned an invalid market")
+    }
+
+    return candidate
+  }
+
+  async resolveMapping(
+    request: MappingResolutionRequest,
+    accessToken: string,
+    correlationId: string,
+  ): Promise<MappingResolutionResponse> {
+    if (!isCanonicalEntityId(request.canonical_entity_id)) {
+      throw new Error("A valid canonical entity ID is required for mapping resolution")
+    }
+
+    const response = await fetch(`${this.baseUrl}${this.mappingResolutionPath}`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+        "x-correlation-id": correlationId,
+      },
+      body: JSON.stringify(request),
+      signal: AbortSignal.timeout(this.timeoutMs),
+    })
+
+    if (!response.ok) {
+      await readProblemOrThrow(response)
+    }
+
+    const candidate: unknown = await response.json()
+    if (
+      !isValidMappingResolutionResponse(candidate) ||
+      candidate.canonical_entity_id !== request.canonical_entity_id
+    ) {
+      throw new Error("Control Plane returned an invalid mapping-resolution response")
     }
 
     return candidate
