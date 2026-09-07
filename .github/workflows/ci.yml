@@ -101,6 +101,12 @@ jobs:
       - name: Verify Gate 6 catalogue and pricing projections
         run: npm run verify:catalogue
 
+      - name: Bootstrap Gate 7 inventory projections
+        run: npm run bootstrap:inventory
+
+      - name: Verify Gate 7 inventory and reservations
+        run: npm run verify:inventory
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
