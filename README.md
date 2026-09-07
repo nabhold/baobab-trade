@@ -60,6 +60,10 @@ UGX/ZAR standard and volume prices with `npm run bootstrap:catalogue`. Trade
 profiles, Market eligibility, MOQ/order multiples, and protected contract-price
 records remain typed B2B data; see `docs/architecture/zuribeans-catalogue-pricing.md`.
 
+Gate 7 provisions six canonical inventory locations, Medusa inventory levels,
+reservation checks, and replay-safe iDempiere projection/reconciliation records
+with `npm run bootstrap:inventory`. See `docs/architecture/zuribeans-inventory.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -70,7 +74,9 @@ records remain typed B2B data; see `docs/architecture/zuribeans-catalogue-pricin
 - `src/baobab/b2b` — server-side B2B purchase and approval policy.
 - `src/baobab/catalogue` — governed ZuriBeans product and bootstrap price definitions.
 - `src/baobab/pricing` — replaceable pricing decision boundary.
+- `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
+- `src/modules/inventory-bridge` — ERP projections and canonical location mappings.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.

@@ -133,6 +133,24 @@ export const B2B_EVENT_TYPES = {
   approvalDecided: "com.nabhold.commerce.b2b-approval.decided.v1",
 } as const
 
+export const INVENTORY_EVENT_TYPES = {
+  projected: "com.nabhold.commerce.inventory.projected.v1",
+  reconciled: "com.nabhold.commerce.inventory.reconciled.v1",
+  reserved: "com.nabhold.commerce.inventory.reserved.v1",
+  released: "com.nabhold.commerce.inventory.released.v1",
+} as const
+
+export type InventoryEventPayload = {
+  inventory_item_id: string
+  stock_location_id: string
+  canonical_location_key: string
+  erp_warehouse_reference: string
+  quantity: number
+  source_sequence?: number
+  reservation_id?: string
+  reconciliation_status?: "MATCHED" | "VARIANCE" | "RESOLVED"
+}
+
 export type B2BOrganisationEventPayload = {
   organisation_id: string
   canonical_organisation_id?: string
