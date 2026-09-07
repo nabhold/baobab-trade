@@ -36,3 +36,50 @@ jobs:
           test -f contracts.lock.yaml
           test -f runtime/requirements.yaml
           test -f .nabhold/environment.yaml
+
+  core-module-integration:
+    runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: baobab_trade_test
+          POSTGRES_USER: baobab_trade
+          POSTGRES_PASSWORD: baobab_trade
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U baobab_trade -d baobab_trade_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://baobab_trade:baobab_trade@localhost:5432/baobab_trade_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: gate-1-integration-jwt-secret
+      COOKIE_SECRET: gate-1-integration-cookie-secret
+      BAOBAB_WEBHOOK_SIGNING_SECRET: gate-1-integration-webhook-secret
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply Medusa migrations
+        run: npm run migrate
+      - name: Verify required core modules
+        run: npm run verify:core-modules
