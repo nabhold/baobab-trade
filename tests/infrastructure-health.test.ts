@@ -8,7 +8,7 @@ describe("production infrastructure health", () => {
       listWorkflowExecutions: vi.fn(),
       acquire: vi.fn(),
       get: vi.fn(),
-      uploadFiles: vi.fn(),
+      createFiles: vi.fn(),
       createNotifications: vi.fn(),
     }
     const container = { resolve: vi.fn(() => service) }
