@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { findByMarketKey, regionMappingTag } from "../src/baobab/market/mapping"
+import {
+  findByMarketKey,
+  findByMetadataKey,
+  regionMappingTag,
+  salesChannelProjectionTag,
+} from "../src/baobab/market/mapping"
 import { readMarketKeyFromMetadata } from "../src/baobab/contracts/canonical-mapping"
 
 describe("engine-native market mapping breadcrumb", () => {
@@ -26,5 +31,19 @@ describe("engine-native market mapping breadcrumb", () => {
     expect(tag.baobab_mapping_authority).toBe(
       "trade-engine-native-pending-control-plane-registration",
     )
+  })
+
+  it("finds the shared ZuriBeans B2B Sales Channel independently of Market", () => {
+    const tag = salesChannelProjectionTag("zuribeans_b2b")
+    expect(
+      findByMetadataKey(
+        [
+          { id: "sc_b2b", metadata: tag },
+          { id: "sc_other", metadata: null },
+        ],
+        "baobab_sales_channel_key",
+        "zuribeans_b2b",
+      ),
+    ).toMatchObject({ id: "sc_b2b" })
   })
 })

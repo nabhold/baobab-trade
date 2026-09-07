@@ -15,6 +15,7 @@
     "migrate": "medusa db:migrate",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "bootstrap:market": "medusa exec ./src/scripts/bootstrap-market.ts",
+    "verify:market-projections": "medusa exec ./src/scripts/verify-market-projections.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

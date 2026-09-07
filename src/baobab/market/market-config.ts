@@ -12,10 +12,10 @@
  * `market_id` must be reconciled against the `baobab_market_key` tag this
  * bootstrap leaves on each Medusa record (see src/baobab/market/mapping.ts).
  *
- * No production provider has been approved for either Market. `payment` and
- * `fulfilment` intentionally use Medusa's own built-in development providers
- * as an explicit placeholder (ADR-0010 §30-§32; task brief §46-§47) — never
- * invent production credentials here.
+ * No external production provider has been approved for either Market.
+ * Payment, tax, and shipping therefore bind Medusa's built-in providers
+ * explicitly. Do not invent provider credentials, tax rates, or shipping
+ * prices here.
  */
 export type ProviderMode = "NATIVE" | "EXTERNAL" | "DISABLED"
 
@@ -36,8 +36,18 @@ export type MarketBootstrapConfig = {
     city: string
   }
   payment: { mode: ProviderMode; providerIds: readonly string[] }
-  fulfilment: { mode: ProviderMode; providerIds: readonly string[] }
-  tax: { mode: ProviderMode }
+  shipping: {
+    mode: ProviderMode
+    providerIds: readonly string[]
+    fulfillmentSet: { key: string; name: string; type: "shipping" }
+    serviceZone: { key: string; name: string; countryCode: string }
+  }
+  tax: {
+    mode: ProviderMode
+    providerId: string
+    automaticTaxes: boolean
+    policyReference: string
+  }
 }
 
 export const toMedusaCurrencyCode = (isoCurrencyCode: string): string =>
@@ -72,7 +82,7 @@ export const ZURIBEANS_UGANDA: MarketBootstrapConfig = {
   countryCode: "UG",
   defaultCurrency: "UGX",
   allowedCurrencies: ["UGX"],
-  salesChannel: { key: "zuribeans_ug_default", name: "ZuriBeans Uganda" },
+  salesChannel: { key: "zuribeans_b2b", name: "ZuriBeans B2B" },
   stockLocation: {
     key: "zuribeans_ug_primary",
     name: "ZuriBeans Uganda Distribution (development placeholder)",
@@ -80,8 +90,26 @@ export const ZURIBEANS_UGANDA: MarketBootstrapConfig = {
     city: "Kampala",
   },
   payment: { mode: "NATIVE", providerIds: ["pp_system_default"] },
-  fulfilment: { mode: "NATIVE", providerIds: ["manual_manual"] },
-  tax: { mode: "NATIVE" },
+  shipping: {
+    mode: "NATIVE",
+    providerIds: ["manual_manual"],
+    fulfillmentSet: {
+      key: "zuribeans_ug_shipping",
+      name: "ZuriBeans Uganda Shipping",
+      type: "shipping",
+    },
+    serviceZone: {
+      key: "zuribeans_ug_domestic",
+      name: "Uganda Domestic",
+      countryCode: "UG",
+    },
+  },
+  tax: {
+    mode: "NATIVE",
+    providerId: "tp_system",
+    automaticTaxes: true,
+    policyReference: "control-plane:zuribeans_ug:tax",
+  },
 }
 
 export const ZURIBEANS_SOUTH_AFRICA: MarketBootstrapConfig = {
@@ -90,7 +118,7 @@ export const ZURIBEANS_SOUTH_AFRICA: MarketBootstrapConfig = {
   countryCode: "ZA",
   defaultCurrency: "ZAR",
   allowedCurrencies: ["ZAR"],
-  salesChannel: { key: "zuribeans_za_default", name: "ZuriBeans South Africa" },
+  salesChannel: { key: "zuribeans_b2b", name: "ZuriBeans B2B" },
   stockLocation: {
     key: "zuribeans_za_primary",
     name: "ZuriBeans South Africa Distribution (development placeholder)",
@@ -98,8 +126,26 @@ export const ZURIBEANS_SOUTH_AFRICA: MarketBootstrapConfig = {
     city: "Johannesburg",
   },
   payment: { mode: "NATIVE", providerIds: ["pp_system_default"] },
-  fulfilment: { mode: "NATIVE", providerIds: ["manual_manual"] },
-  tax: { mode: "NATIVE" },
+  shipping: {
+    mode: "NATIVE",
+    providerIds: ["manual_manual"],
+    fulfillmentSet: {
+      key: "zuribeans_za_shipping",
+      name: "ZuriBeans South Africa Shipping",
+      type: "shipping",
+    },
+    serviceZone: {
+      key: "zuribeans_za_domestic",
+      name: "South Africa Domestic",
+      countryCode: "ZA",
+    },
+  },
+  tax: {
+    mode: "NATIVE",
+    providerId: "tp_system",
+    automaticTaxes: true,
+    policyReference: "control-plane:zuribeans_za:tax",
+  },
 }
 
 export const ZURIBEANS_LAUNCH_MARKETS: readonly MarketBootstrapConfig[] = [

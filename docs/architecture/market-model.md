@@ -58,16 +58,18 @@ reconciliation job can find what Trade already provisioned.
 | Market key (candidate) | `zuribeans_ug`                              | `zuribeans_za`                              |
 | Country                | UG                                          | ZA                                          |
 | Default currency       | UGX                                         | ZAR                                         |
-| Sales Channel          | ZuriBeans Uganda                            | ZuriBeans South Africa                      |
+| Sales Channel          | ZuriBeans B2B (shared)                       | ZuriBeans B2B (shared)                       |
 | Stock Location         | development placeholder, Kampala            | development placeholder, Johannesburg       |
 | Payment                | `NATIVE`, Medusa system default placeholder | `NATIVE`, Medusa system default placeholder |
-| Fulfilment             | `NATIVE`, Medusa manual placeholder         | `NATIVE`, Medusa manual placeholder         |
-| Tax                    | `NATIVE` (no provider selected)             | `NATIVE` (no provider selected)             |
+| Shipping context       | Uganda domestic service zone                 | South Africa domestic service zone            |
+| Fulfilment             | `NATIVE`, Medusa manual provider            | `NATIVE`, Medusa manual provider            |
+| Tax                    | System provider; no rates hardcoded          | System provider; no rates hardcoded           |
 
-No production payment, fulfilment or tax provider has been approved for
-either Market — see Outstanding Decisions in `docs/architecture.md`. Both
-Markets are configured symmetrically in shape but independently in value:
-adding a real provider to one does not require touching the other.
+Gate 4 binds Medusa's system payment, tax, and manual fulfilment providers so
+the projections are executable without pretending that a production provider
+has been approved. Each Market has an independent provider-policy object.
+Jurisdictional tax percentages, shipping prices, and cross-border rules are
+not seeded here; later gates must source them from governed policy.
 
 ## Running the bootstrap
 
@@ -77,6 +79,7 @@ medusa exec ./src/scripts/bootstrap-market.ts zuribeans_ug   # one Market only
 ```
 
 The script is idempotent: re-running it detects already-provisioned records
-by the mapping breadcrumb and leaves them untouched. It provisions Medusa's
-Region, Sales Channel, Stock Location and Store currency support; it does
-**not** install or configure a payment/fulfilment/tax provider package.
+by deterministic metadata or names and leaves them untouched. It provisions
+Medusa Regions, the shared B2B Sales Channel, Stock Locations, Store currency
+support, Tax Regions, country Service Zones, and provider links. It does not
+seed products, orders, tax percentages, or shipping prices.
