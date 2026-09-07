@@ -55,6 +55,11 @@ delivery sites, and tax registrations. Run `npm run verify:b2b-module` after
 migrations. The complete authority and persistence model is documented in
 `docs/architecture/zuribeans-b2b-commerce.md`.
 
+Gate 6 provisions the focused ten-product wholesale catalogue and independent
+UGX/ZAR standard and volume prices with `npm run bootstrap:catalogue`. Trade
+profiles, Market eligibility, MOQ/order multiples, and protected contract-price
+records remain typed B2B data; see `docs/architecture/zuribeans-catalogue-pricing.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -63,6 +68,8 @@ migrations. The complete authority and persistence model is documented in
 - `src/baobab/events` — versioned cross-engine envelopes and publishers.
 - `src/baobab/market` — Market configuration and engine-native mapping helpers.
 - `src/baobab/b2b` — server-side B2B purchase and approval policy.
+- `src/baobab/catalogue` — governed ZuriBeans product and bootstrap price definitions.
+- `src/baobab/pricing` — replaceable pricing decision boundary.
 - `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
