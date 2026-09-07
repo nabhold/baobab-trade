@@ -14,7 +14,7 @@ Contract provenance is pinned in `contracts.lock.yaml`. Runtime needs are declar
 
 ## Local development
 
-Prerequisites follow Medusa guidance: Node.js 20.19+ or 22.12+, Git, PostgreSQL and Redis.
+Prerequisites: Node.js 24, Git, PostgreSQL and Redis.
 
 ```bash
 cp .env.example .env
@@ -47,6 +47,14 @@ Market differs from Medusa Region, and run `npm run bootstrap:market` to
 idempotently provision each Market's Region, Sales Channel and Stock
 Location.
 
+## ZuriBeans B2B
+
+Gate 5 adds the typed `b2b` Medusa module for organisations, buyer memberships,
+organisation-local roles, purchase approvals, PO references, commercial terms,
+delivery sites, and tax registrations. Run `npm run verify:b2b-module` after
+migrations. The complete authority and persistence model is documented in
+`docs/architecture/zuribeans-b2b-commerce.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -54,6 +62,8 @@ Location.
 - `src/baobab/control-plane` — Control Plane client boundary.
 - `src/baobab/events` — versioned cross-engine envelopes and publishers.
 - `src/baobab/market` — Market configuration and engine-native mapping helpers.
+- `src/baobab/b2b` — server-side B2B purchase and approval policy.
+- `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.
