@@ -22,16 +22,30 @@ describe("ZuriBeans launch Market configuration", () => {
     expect(ZURIBEANS_SOUTH_AFRICA.allowedCurrencies).not.toContain("UGX")
   })
 
-  it("gives each Market its own Sales Channel and Stock Location keys", () => {
-    expect(ZURIBEANS_UGANDA.salesChannel.key).not.toBe(ZURIBEANS_SOUTH_AFRICA.salesChannel.key)
+  it("uses one principal B2B Sales Channel and distinct Market Stock Locations", () => {
+    expect(ZURIBEANS_UGANDA.salesChannel.key).toBe("zuribeans_b2b")
+    expect(ZURIBEANS_SOUTH_AFRICA.salesChannel.key).toBe("zuribeans_b2b")
     expect(ZURIBEANS_UGANDA.stockLocation.key).not.toBe(ZURIBEANS_SOUTH_AFRICA.stockLocation.key)
   })
 
-  it("allows independent payment/fulfilment provider bindings per Market", () => {
+  it("allows independent payment/shipping provider bindings per Market", () => {
     // Independently configurable today just means: distinct config objects,
     // not required to differ in value for the initial launch.
     expect(ZURIBEANS_UGANDA.payment).not.toBe(ZURIBEANS_SOUTH_AFRICA.payment)
-    expect(ZURIBEANS_UGANDA.fulfilment).not.toBe(ZURIBEANS_SOUTH_AFRICA.fulfilment)
+    expect(ZURIBEANS_UGANDA.shipping).not.toBe(ZURIBEANS_SOUTH_AFRICA.shipping)
+    expect(ZURIBEANS_UGANDA.payment.providerIds).toContain("pp_system_default")
+    expect(ZURIBEANS_SOUTH_AFRICA.shipping.providerIds).toContain("manual_manual")
+  })
+
+  it("defines distinct domestic shipping and tax contexts without hardcoded rates", () => {
+    expect(ZURIBEANS_UGANDA.shipping.serviceZone.countryCode).toBe("UG")
+    expect(ZURIBEANS_SOUTH_AFRICA.shipping.serviceZone.countryCode).toBe("ZA")
+    expect(ZURIBEANS_UGANDA.shipping.fulfillmentSet.key).not.toBe(
+      ZURIBEANS_SOUTH_AFRICA.shipping.fulfillmentSet.key,
+    )
+    expect(ZURIBEANS_UGANDA.tax.automaticTaxes).toBe(true)
+    expect(ZURIBEANS_SOUTH_AFRICA.tax.automaticTaxes).toBe(true)
+    expect(ZURIBEANS_UGANDA.tax).not.toHaveProperty("rate")
   })
 
   it("does not hardcode a UUID as a market identity", () => {

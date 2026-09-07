@@ -6,6 +6,18 @@ import {
 
 type HasMetadata = { metadata?: Record<string, unknown> | null }
 
+export const findByMetadataKey = <T extends HasMetadata>(
+  records: readonly T[],
+  key: string,
+  value: string,
+): T | undefined => records.find((record) => record.metadata?.[key] === value)
+
+export const salesChannelProjectionTag = (salesChannelKey: string) => ({
+  baobab_sales_channel_key: salesChannelKey,
+  baobab_mapping_type: "CHANNEL" as const,
+  baobab_mapping_authority: "trade-engine-native-pending-control-plane-registration" as const,
+})
+
 /**
  * Finds a previously-provisioned Medusa record by the market-key breadcrumb
  * this bootstrap leaves in `metadata`. Used to make Market provisioning

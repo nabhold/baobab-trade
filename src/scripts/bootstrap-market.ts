@@ -1,10 +1,13 @@
-import { Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
+import { linkSalesChannelsToStockLocationWorkflow } from "@medusajs/core-flows"
 import type {
   ExecArgs,
+  IFulfillmentModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
   IStockLocationService,
   IStoreModuleService,
+  ITaxModuleService,
 } from "@medusajs/framework/types"
 import {
   ZURIBEANS_LAUNCH_MARKETS,
@@ -15,8 +18,9 @@ import {
 } from "../baobab/market/market-config"
 import {
   findByMarketKey,
+  findByMetadataKey,
   regionMappingTag,
-  salesChannelMappingTag,
+  salesChannelProjectionTag,
   stockLocationMappingTag,
 } from "../baobab/market/mapping"
 import { createStructuredLogger } from "../baobab/logging/logger"
@@ -31,16 +35,20 @@ const logger = createStructuredLogger("bootstrap-market")
  *
  * This does NOT register anything with the Control Plane Market registry —
  * that record does not exist yet for either Market (see market-config.ts).
- * It also does NOT install or configure a payment/fulfilment/tax *provider
- * package* — it only records which provider mode/ids each Market expects so
- * a follow-up increment can wire the real provider modules into
- * medusa-config.ts once one is approved.
+ * It binds the built-in payment, fulfilment, and tax providers selected by
+ * Market configuration. External provider packages and credentials remain a
+ * later, separately approved concern.
  */
 async function bootstrapMarket(container: ExecArgs["container"], config: MarketBootstrapConfig) {
   const regionService = container.resolve<IRegionModuleService>(Modules.REGION)
   const salesChannelService = container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
   const stockLocationService = container.resolve<IStockLocationService>(Modules.STOCK_LOCATION)
   const storeService = container.resolve<IStoreModuleService>(Modules.STORE)
+  const fulfillmentService = container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT)
+  const taxService = container.resolve<ITaxModuleService>(Modules.TAX)
+  const remoteLink = container.resolve(ContainerRegistrationKeys.LINK) as {
+    create(links: Record<string, Record<string, string>>[]): Promise<unknown>
+  }
 
   const log = (message: string, meta: Record<string, unknown> = {}) =>
     logger.info(message, { marketKey: config.marketKey, ...meta })
@@ -73,6 +81,8 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
       name: config.displayName,
       currency_code: toMedusaCurrencyCode(config.defaultCurrency),
       countries: [config.countryCode.toLowerCase()],
+      automatic_taxes: config.tax.automaticTaxes,
+      payment_providers: [...config.payment.providerIds],
       metadata: regionMappingTag(config.marketKey),
     })
     log("created region", { regionId: region.id })
@@ -82,13 +92,17 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
 
   // Sales channel.
   const existingSalesChannels = await salesChannelService.listSalesChannels({})
-  let salesChannel = findByMarketKey(existingSalesChannels, config.marketKey)
+  let salesChannel = findByMetadataKey(
+    existingSalesChannels,
+    "baobab_sales_channel_key",
+    config.salesChannel.key,
+  )
   if (!salesChannel) {
     salesChannel = await salesChannelService.createSalesChannels({
       name: config.salesChannel.name,
     })
     salesChannel = await salesChannelService.updateSalesChannels(salesChannel.id, {
-      metadata: salesChannelMappingTag(config.marketKey),
+      metadata: salesChannelProjectionTag(config.salesChannel.key),
     })
     log("created sales channel", { salesChannelId: salesChannel.id })
   } else {
@@ -98,6 +112,7 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
   // Stock location.
   const existingStockLocations = await stockLocationService.listStockLocations({})
   let stockLocation = findByMarketKey(existingStockLocations, config.marketKey)
+  let stockLocationCreated = false
   if (!stockLocation) {
     stockLocation = await stockLocationService.createStockLocations({
       name: config.stockLocation.name,
@@ -108,14 +123,79 @@ async function bootstrapMarket(container: ExecArgs["container"], config: MarketB
       },
       metadata: stockLocationMappingTag(config.marketKey),
     })
+    stockLocationCreated = true
     log("created stock location", { stockLocationId: stockLocation.id })
   } else {
     log("stock location already provisioned", { stockLocationId: stockLocation.id })
   }
 
-  log("provider modes recorded as placeholders — no provider package wired yet", {
+  // Tax Region. Rates are deliberately not seeded: Control Plane tax policy
+  // and later jurisdiction gates remain authoritative for rates and tariffs.
+  const [taxRegion] = await taxService.listTaxRegions({
+    country_code: config.countryCode.toLowerCase(),
+  })
+  if (!taxRegion) {
+    const created = await taxService.createTaxRegions({
+      country_code: config.countryCode.toLowerCase(),
+      provider_id: config.tax.providerId,
+      metadata: {
+        baobab_market_key: config.marketKey,
+        baobab_tax_policy_reference: config.tax.policyReference,
+      },
+    })
+    log("created tax region without hardcoded rates", { taxRegionId: created.id })
+  } else {
+    log("tax region already provisioned", { taxRegionId: taxRegion.id })
+  }
+
+  // Shipping context: a location-bound fulfillment set and a country service
+  // zone. Shipping options/rates are a later provider decision.
+  let [fulfillmentSet] = await fulfillmentService.listFulfillmentSets({
+    name: config.shipping.fulfillmentSet.name,
+  })
+  if (!fulfillmentSet) {
+    fulfillmentSet = await fulfillmentService.createFulfillmentSets({
+      name: config.shipping.fulfillmentSet.name,
+      type: config.shipping.fulfillmentSet.type,
+      service_zones: [
+        {
+          name: config.shipping.serviceZone.name,
+          geo_zones: [
+            {
+              type: "country",
+              country_code: config.shipping.serviceZone.countryCode.toLowerCase(),
+            },
+          ],
+        },
+      ],
+    })
+    await remoteLink.create([
+      {
+        [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
+        [Modules.FULFILLMENT]: { fulfillment_set_id: fulfillmentSet.id },
+      },
+    ])
+    log("created location shipping context", { fulfillmentSetId: fulfillmentSet.id })
+  } else {
+    log("shipping context already provisioned", { fulfillmentSetId: fulfillmentSet.id })
+  }
+
+  if (stockLocationCreated) {
+    await linkSalesChannelsToStockLocationWorkflow(container).run({
+      input: { id: stockLocation.id, add: [salesChannel.id], remove: [] },
+    })
+    await remoteLink.create(
+      config.shipping.providerIds.map((providerId) => ({
+        [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
+        [Modules.FULFILLMENT]: { fulfillment_provider_id: providerId },
+      })),
+    )
+    log("bound stock location to B2B channel and fulfillment providers")
+  }
+
+  log("market provider bindings configured", {
     payment: config.payment,
-    fulfilment: config.fulfilment,
+    shipping: config.shipping,
     tax: config.tax,
   })
 }
