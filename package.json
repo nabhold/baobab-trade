@@ -16,6 +16,7 @@
     "seed": "medusa exec ./src/scripts/seed.ts",
     "bootstrap:market": "medusa exec ./src/scripts/bootstrap-market.ts",
     "verify:market-projections": "medusa exec ./src/scripts/verify-market-projections.ts",
+    "verify:b2b-module": "medusa exec ./src/scripts/verify-b2b-module.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

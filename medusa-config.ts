@@ -22,6 +22,6 @@ export default defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "development-cookie-secret",
     },
   },
-  modules: getInfrastructureModules(),
+  modules: [...getInfrastructureModules(), { resolve: "./src/modules/b2b" }],
   plugins: [],
 })

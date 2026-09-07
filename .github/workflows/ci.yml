@@ -92,6 +92,9 @@ jobs:
       - name: Verify Market projection isolation
         run: npm run verify:market-projections
 
+      - name: Verify Gate 5 B2B module persistence
+        run: npm run verify:b2b-module
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

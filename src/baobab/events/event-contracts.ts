@@ -125,3 +125,35 @@ export type TradeOrderAcceptedPayload = {
   currency: string
   total: number
 }
+
+export const B2B_EVENT_TYPES = {
+  organisationCreated: "com.nabhold.commerce.b2b-organisation.created.v1",
+  buyerAdded: "com.nabhold.commerce.b2b-buyer.added.v1",
+  approvalRequested: "com.nabhold.commerce.b2b-approval.requested.v1",
+  approvalDecided: "com.nabhold.commerce.b2b-approval.decided.v1",
+} as const
+
+export type B2BOrganisationEventPayload = {
+  organisation_id: string
+  canonical_organisation_id?: string
+  market_keys: string[]
+}
+
+export type B2BBuyerEventPayload = {
+  organisation_id: string
+  membership_id: string
+  customer_id: string
+  principal_id: string
+  roles: string[]
+}
+
+export type B2BApprovalEventPayload = {
+  organisation_id: string
+  approval_id: string
+  requested_by_membership_id: string
+  decided_by_membership_id?: string
+  amount_minor: number
+  currency_code: string
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
+  customer_po_number?: string
+}
