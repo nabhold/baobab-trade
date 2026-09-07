@@ -135,7 +135,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=dev
       - name: Apply Medusa migrations with production providers
         run: npm run migrate
       - name: Verify production infrastructure modules
