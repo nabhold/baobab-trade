@@ -22,6 +22,10 @@ export default defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "development-cookie-secret",
     },
   },
-  modules: [...getInfrastructureModules(), { resolve: "./src/modules/b2b" }],
+  modules: [
+    ...getInfrastructureModules(),
+    { resolve: "./src/modules/b2b" },
+    { resolve: "./src/modules/inventory-bridge" },
+  ],
   plugins: [],
 })
