@@ -99,6 +99,9 @@ Payments, Fulfilment, Trade Compliance, and future Ledger Evidence while
 keeping native Medusa implementations active. See
 `docs/architecture/engine-boundaries.md`.
 
+Gate 15 completes B2B isolation and adversarial authorization tests. See
+`docs/security/zuribeans-b2b-threat-model.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
