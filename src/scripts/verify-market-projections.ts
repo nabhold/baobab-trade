@@ -9,7 +9,7 @@ import type {
   ITaxModuleService,
 } from "@medusajs/framework/types"
 import { ZURIBEANS_LAUNCH_MARKETS, toMedusaCurrencyCode } from "../baobab/market/market-config"
-import { findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
+import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
 
 const required = <T>(value: T | undefined, message: string): T => {
   if (!value) throw new Error(message)
@@ -17,7 +17,9 @@ const required = <T>(value: T | undefined, message: string): T => {
 }
 
 export default async function ({ container }: ExecArgs) {
-  const regions = await container.resolve<IRegionModuleService>(Modules.REGION).listRegions({})
+  const regions = await container
+    .resolve<IRegionModuleService>(Modules.REGION)
+    .listRegions({}, { relations: ["countries"] })
   const channels = await container
     .resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
     .listSalesChannels({})
@@ -36,8 +38,12 @@ export default async function ({ container }: ExecArgs) {
   )
 
   for (const config of ZURIBEANS_LAUNCH_MARKETS) {
+    // Region is looked up by country, not by the `zuribeans_*` market-key
+    // tag: Medusa allows only one Region per country, so this Market's
+    // Region may legitimately have been provisioned first by Thamani B2C
+    // and carry its `thamani_*` tag instead. See findByCountryCode.
     const region = required(
-      findByMarketKey(regions, config.marketKey),
+      findByCountryCode(regions, config.countryCode),
       `Region projection is missing for ${config.marketKey}`,
     )
     if (region.currency_code !== toMedusaCurrencyCode(config.defaultCurrency)) {

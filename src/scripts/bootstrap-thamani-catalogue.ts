@@ -1,0 +1,196 @@
+import { createProductsWorkflow } from "@medusajs/core-flows"
+import type {
+  ExecArgs,
+  IFulfillmentModuleService,
+  IProductModuleService,
+  ISalesChannelModuleService,
+} from "@medusajs/framework/types"
+import { Modules } from "@medusajs/framework/utils"
+import {
+  THAMANI_CATALOGUE,
+  THAMANI_CATEGORY_COUNTS,
+  type ThamaniProductCategory,
+  type ThamaniProductConfig,
+} from "../baobab/thamani/catalogue"
+import { THAMANI_SUPPLIERS } from "../baobab/thamani/suppliers"
+import { findByMetadataKey } from "../baobab/market/mapping"
+import type ThamaniModuleService from "../modules/thamani/service"
+
+const CATEGORY_TITLES: Record<ThamaniProductCategory, string> = {
+  COFFEE_TEA: "Coffee & Tea",
+  CHOCOLATE_CONFECTIONERY: "Chocolate & Confectionery",
+  SPICES_SEASONINGS: "Spices & Seasonings",
+  PANTRY_STAPLES: "Pantry Staples",
+  NATURAL_FOODS: "Natural Foods",
+  PERSONAL_CARE: "Personal Care",
+  HOUSEHOLD: "Household",
+  LIFESTYLE: "Lifestyle",
+}
+
+async function ensureCategories(
+  productService: IProductModuleService,
+): Promise<Map<ThamaniProductCategory, string>> {
+  const categoryIdByKey = new Map<ThamaniProductCategory, string>()
+  for (const category of Object.keys(THAMANI_CATEGORY_COUNTS) as ThamaniProductCategory[]) {
+    const title = CATEGORY_TITLES[category]
+    const [existing] = await productService.listProductCategories({ name: title })
+    const record =
+      existing ??
+      (await productService.createProductCategories({
+        name: title,
+        is_active: true,
+        metadata: { baobab_catalogue: "thamani_b2c", thamani_category: category },
+      }))
+    categoryIdByKey.set(category, record.id)
+  }
+  return categoryIdByKey
+}
+
+async function ensureSuppliers(thamani: ThamaniModuleService): Promise<Map<string, string>> {
+  const supplierIdByKey = new Map<string, string>()
+  for (const config of THAMANI_SUPPLIERS) {
+    const [existing] = await thamani.listSuppliers({ supplier_key: config.supplierKey })
+    const supplier =
+      existing ??
+      (await thamani.createSuppliers({
+        supplier_key: config.supplierKey,
+        name: config.name,
+        category: config.category,
+        origin_country: config.originCountry,
+        synthetic: config.synthetic,
+        erp_business_partner_reference: null,
+        status: "ACTIVE",
+      }))
+    supplierIdByKey.set(config.supplierKey, supplier.id)
+  }
+  return supplierIdByKey
+}
+
+async function ensureRetailProjection(
+  thamani: ThamaniModuleService,
+  productId: string,
+  supplierIdByKey: Map<string, string>,
+  config: ThamaniProductConfig,
+): Promise<void> {
+  const supplierId = supplierIdByKey.get(config.supplierKey)
+  if (!supplierId) throw new Error(`Unresolved supplier for ${config.sku}`)
+
+  const [profile] = await thamani.listProductRetailProfiles({ product_id: productId })
+  if (!profile) {
+    await thamani.createProductRetailProfiles({
+      product_id: productId,
+      canonical_product_key: config.canonicalKey,
+      supplier_id: supplierId,
+      country_of_origin: config.countryOfOrigin,
+      hs_classification_reference: config.hsClassificationReference,
+      customs_category: config.customsCategory,
+      product_tax_category: config.productTaxCategory,
+      brand: config.brand,
+      net_weight_kg: config.netWeightKg,
+      gross_weight_kg: config.grossWeightKg,
+      packaging: config.packaging,
+      trade_uom: config.tradeUom,
+      consumer_uom: config.consumerUom,
+      food_attributes: config.foodAttributes ?? null,
+    })
+  }
+
+  for (const marketKey of config.eligibleMarkets) {
+    const [eligibility] = await thamani.listMarketProductEligibilities({
+      product_id: productId,
+      market_key: marketKey,
+    })
+    if (!eligibility) {
+      await thamani.createMarketProductEligibilities({
+        product_id: productId,
+        market_key: marketKey,
+        status: "ACTIVE",
+        policy_reference: `control-plane:${marketKey}:catalogue`,
+      })
+    }
+  }
+}
+
+export default async function bootstrapThamaniCatalogue({ container }: ExecArgs): Promise<void> {
+  const logger = container.resolve("logger")
+  const productService = container.resolve<IProductModuleService>(Modules.PRODUCT)
+  const salesChannelService = container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
+  const fulfillmentService = container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT)
+  const thamani = container.resolve<ThamaniModuleService>("thamani")
+
+  const salesChannels = await salesChannelService.listSalesChannels({})
+  const salesChannel = findByMetadataKey(salesChannels, "baobab_sales_channel_key", "thamani_b2c")
+  if (!salesChannel)
+    throw new Error("Run bootstrap:thamani-market before bootstrap:thamani-catalogue")
+
+  let [shippingProfile] = await fulfillmentService.listShippingProfiles({ type: "default" })
+  if (!shippingProfile) {
+    shippingProfile = await fulfillmentService.createShippingProfiles({
+      name: "Thamani retail goods",
+      type: "default",
+    })
+  }
+
+  const categoryIdByKey = await ensureCategories(productService)
+  const supplierIdByKey = await ensureSuppliers(thamani)
+
+  let created = 0
+  for (const config of THAMANI_CATALOGUE) {
+    let [product] = await productService.listProducts(
+      { handle: config.handle },
+      { relations: ["variants"] },
+    )
+    if (!product) {
+      const categoryId = categoryIdByKey.get(config.category)
+      if (!categoryId) throw new Error(`Unresolved category for ${config.sku}`)
+
+      const { result } = await createProductsWorkflow(container).run({
+        input: {
+          products: [
+            {
+              title: config.title,
+              handle: config.handle,
+              status: "published",
+              description: `${config.title} — Thamani consumer retail.`,
+              shipping_profile_id: shippingProfile.id,
+              sales_channels: [{ id: salesChannel.id }],
+              category_ids: [categoryId],
+              options: [{ title: "Pack", values: [config.consumerUom] }],
+              variants: [
+                {
+                  title: `${config.title} (${config.consumerUom})`,
+                  sku: config.sku,
+                  options: { Pack: config.consumerUom },
+                  manage_inventory: true,
+                  allow_backorder: false,
+                  weight: config.grossWeightKg * 1000,
+                  hs_code: config.hsClassificationReference,
+                  origin_country: config.countryOfOrigin,
+                  prices: config.prices.map((price) => ({
+                    currency_code: price.currencyCode,
+                    amount: price.standardAmount,
+                  })),
+                },
+              ],
+              metadata: {
+                baobab_canonical_product_key: config.canonicalKey,
+                baobab_catalogue: "thamani_b2c",
+                thamani_category: config.category,
+              },
+            },
+          ],
+        },
+      })
+      product = result[0]
+      created += 1
+    }
+
+    const variant = product.variants?.[0]
+    if (!variant) throw new Error(`Product ${config.handle} has no retail variant`)
+    await ensureRetailProjection(thamani, product.id, supplierIdByKey, config)
+  }
+
+  logger.info(
+    `Bootstrapped ${THAMANI_CATALOGUE.length} Thamani B2C retail products (${created} newly created) across ${supplierIdByKey.size} suppliers`,
+  )
+}

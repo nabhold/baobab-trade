@@ -15,6 +15,7 @@ import {
   type MarketBootstrapConfig,
 } from "./market-config"
 import {
+  findByCountryCode,
   findByMarketKey,
   findByMetadataKey,
   regionMappingTag,
@@ -75,9 +76,12 @@ export async function bootstrapMarket(
     log("no store found; skipping store currency binding", { level: "warn" })
   }
 
-  // Region.
-  const existingRegions = await regionService.listRegions({})
-  let region = findByMarketKey(existingRegions, config.marketKey)
+  // Region. Medusa enforces at most one Region per country store-wide, so a
+  // country already covered by another Digital Estate's Region (e.g.
+  // ZuriBeans B2B provisioning Uganda before Thamani B2C does) is reused
+  // as-is rather than recreated — see findByCountryCode.
+  const existingRegions = await regionService.listRegions({}, { relations: ["countries"] })
+  let region = findByCountryCode(existingRegions, config.countryCode)
   if (!region) {
     region = await regionService.createRegions({
       name: config.displayName,
@@ -89,7 +93,15 @@ export async function bootstrapMarket(
     })
     log("created region", { regionId: region.id })
   } else {
-    log("region already provisioned", { regionId: region.id })
+    if (region.currency_code !== toMedusaCurrencyCode(config.defaultCurrency)) {
+      throw new Error(
+        `Region for country ${config.countryCode} already exists with currency ` +
+          `${region.currency_code}, not ${toMedusaCurrencyCode(config.defaultCurrency)}`,
+      )
+    }
+    log("region already provisioned for this country by another Digital Estate", {
+      regionId: region.id,
+    })
   }
 
   // Sales channel.

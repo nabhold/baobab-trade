@@ -48,7 +48,7 @@ export const THAMANI_UGANDA: MarketBootstrapConfig = {
     },
     serviceZone: {
       key: "thamani_ug_domestic",
-      name: "Uganda Domestic",
+      name: "Thamani Uganda Domestic",
       countryCode: "UG",
     },
   },
@@ -84,7 +84,7 @@ export const THAMANI_SOUTH_AFRICA: MarketBootstrapConfig = {
     },
     serviceZone: {
       key: "thamani_za_domestic",
-      name: "South Africa Domestic",
+      name: "Thamani South Africa Domestic",
       countryCode: "ZA",
     },
   },
