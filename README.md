@@ -93,11 +93,11 @@ See `docs/architecture/zuribeans-erp-integration.md`.
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
 engine instance — a strict B2C retailer with many independent suppliers, not
-a marketplace and not a second ZuriBeans storefront. Gates 0-8 (Discovery
-through Retail Pricing) are implemented; promotions, full inventory,
-regional payments, fulfilment providers, tax provider integration,
-cross-border trade readiness, ERP integration, events, Store Credit, and the
-simulation dataset remain planned. See `docs/architecture/thamani-b2c-foundation.md`
+a marketplace and not a second ZuriBeans storefront. Gates 0-9 (Discovery
+through Promotions) are implemented; full inventory, regional payments,
+fulfilment providers, tax provider integration, cross-border trade
+readiness, ERP integration, events, Store Credit, and the simulation
+dataset remain planned. See `docs/architecture/thamani-b2c-foundation.md`
 for Gates 0-6, including the two Medusa store-wide constraints (one Region
 per country, globally unique Fulfillment Service Zone names) that shape how
 the two estates share this engine.
@@ -129,6 +129,18 @@ sale Price Lists (one active, one upcoming, one expired, windows computed
 relative to _now_) and `npm run verify:thamani-pricing` to check effective
 dating resolves correctly. See `docs/architecture/thamani-pricing.md`.
 
+Gate 9 adds percentage/code-based Promotions using Medusa's native
+Promotion module, plus Baobab's own Market/currency-scope and
+exclusive-stacking policy checks in front of it (`applyThamaniPromotion`) —
+neither is enforced by Medusa itself. Run `npm run bootstrap:thamani-promotions`
+to provision the two demonstration codes and `npm run verify:thamani-promotions`
+to check their configuration. `npm run regression:thamani-promotion-application`
+is a separate, disposable-database-only fixture proving a discount actually
+computes correctly against a Cart and that a second code is rejected — it
+mutates data (including a Gate-10-independent stock level for its two demo
+variants) and is deliberately not part of the read-only health check. See
+`docs/architecture/thamani-promotions.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -142,7 +154,7 @@ dating resolves correctly. See `docs/architecture/thamani-pricing.md`.
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
 - `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
-- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, and pricing-decision definitions.
+- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, pricing-decision, and promotion definitions.
 - `src/baobab/tax` — contextual tax policy, effective-dated provider, and reconciliation.
 - `src/baobab/trade-readiness` — cross-border metadata and compliance-provider boundary.
 - `src/baobab/erp-integration` — durable ERP projection and reconciliation policy.

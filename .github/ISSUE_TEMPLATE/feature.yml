@@ -1,4 +1,3 @@
-
 name: Feature Request
 description: Create a business feature that delivers value to users and contributes to an Epic.
 title: "[FEATURE]: "
@@ -6,7 +5,6 @@ labels:
   - feature
 
 body:
-
   - type: markdown
     attributes:
       value: |
