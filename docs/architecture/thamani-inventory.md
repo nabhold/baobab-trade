@@ -27,6 +27,6 @@ Only locations in a product's configured eligible Markets receive inventory leve
 
 ## Reservations and reconciliation
 
-`MedusaInventoryAvailabilityAdapter` remains the native-in-Medusa implementation of `InventoryAvailabilityPort`. Gate verification creates and releases a real reservation and proves available-to-sell falls and recovers. Initial ERP projections use stable idempotency keys and reconciliation records expose variance; they do not conceal it by overwriting either side. Verification accepts a correctly calculated `VARIANCE` (including stock left by an earlier integration scenario) and rejects inconsistent delta/status pairs.
+`MedusaInventoryAvailabilityAdapter` remains the native-in-Medusa implementation of `InventoryAvailabilityPort`. Gate verification creates and releases a real reservation and proves the reserved quantity rises and returns to its baseline. Available-to-sell calculation is covered independently because Medusa's aggregate `available_quantity` decoration is context-dependent. Initial ERP projections use stable idempotency keys and reconciliation records expose variance; they do not conceal it by overwriting either side. Verification accepts a correctly calculated `VARIANCE` (including stock left by an earlier integration scenario) and rejects inconsistent delta/status pairs.
 
 Run `npm run bootstrap:thamani-inventory` after the Thamani Market and catalogue bootstraps. Run `npm run verify:thamani-inventory` for an integration check (it briefly creates and releases one reservation).
