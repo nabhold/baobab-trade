@@ -2,7 +2,7 @@ contract_bundle:
   name: "baobab-platform-resolution"
   version: "1.0.0"
   source_repository: "nabhold/shared"
-  source_commit: "03869ae0b108e6dd27072c026f8e05ee3b09e860"
+  source_commit: "2da1a429602d2f1421c498d412bb6c65a5626127"
 schema:
   name: "nabhold-contract-consumption-lock"
   version: "1.0"
@@ -12,7 +12,7 @@ consumer:
 sources:
   shared:
     repository: "nabhold/shared"
-    commit: "03869ae0b108e6dd27072c026f8e05ee3b09e860"
+    commit: "2da1a429602d2f1421c498d412bb6c65a5626127"
     contracts:
       development_environment:
         path: "contracts/development-environment/schema.yaml"
