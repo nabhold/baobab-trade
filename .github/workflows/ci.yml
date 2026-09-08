@@ -87,6 +87,8 @@ jobs:
         run: npm ci
       - name: Apply Medusa migrations
         run: npm run migrate
+      - name: Apply search index migrations
+        run: npm run migrate:search
       - name: Verify required core modules
         run: npm run verify:core-modules
       - name: Bootstrap Uganda and South Africa Market projections
@@ -157,6 +159,30 @@ jobs:
       - name: Verify Gate 18 ZuriBeans Uganda-South Africa simulation
         run: npm run verify:simulation
 
+      - name: Rebuild Thamani B2C product search index
+        run: npm run bootstrap:thamani-search
+
+      - name: Verify Thamani B2C search health and Market isolation
+        run: npm run verify:thamani-search
+
+      - name: Regression — Thamani B2C eligibility suspension reaches search (mutates this disposable database only)
+        run: npm run regression:thamani-eligibility-sync
+
+      - name: Bootstrap Thamani B2C sale pricing
+        run: npm run bootstrap:thamani-pricing
+
+      - name: Verify Thamani B2C sale pricing and effective dating
+        run: npm run verify:thamani-pricing
+
+      - name: Bootstrap Thamani B2C promotions
+        run: npm run bootstrap:thamani-promotions
+
+      - name: Verify Thamani B2C promotion configuration
+        run: npm run verify:thamani-promotions
+
+      - name: Regression — Thamani B2C promotion discount computation and exclusive stacking (mutates this disposable database only)
+        run: npm run regression:thamani-promotion-application
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
@@ -211,5 +237,7 @@ jobs:
         run: npm ci --include=dev
       - name: Apply Medusa migrations with production providers
         run: npm run migrate
+      - name: Apply search index migrations
+        run: npm run migrate:search
       - name: Verify production infrastructure modules
         run: npm run verify:infrastructure

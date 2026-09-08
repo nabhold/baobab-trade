@@ -33,6 +33,17 @@ export default defineConfig({
     { resolve: "./src/modules/trade-readiness" },
     { resolve: "./src/modules/erp-integration" },
     { resolve: "./src/modules/event-outbox" },
+    {
+      resolve: "@medusajs/medusa/search",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/search-postgres",
+            id: "postgres",
+          },
+        ],
+      },
+    },
   ],
   plugins: [],
 })

@@ -1,3 +1,5 @@
 export * as thamaniCustomer from "./customer"
 export * as thamaniCatalogue from "./catalogue"
 export * as thamaniSuppliers from "./suppliers"
+export * as thamaniSearch from "./search"
+export * as thamaniPricing from "./pricing"
