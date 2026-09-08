@@ -25,6 +25,7 @@ export default async function bootstrapThamaniInventory({ container }: ExecArgs)
   const salesChannels = container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
   const inventory = container.resolve<IInventoryService>(Modules.INVENTORY)
   const bridge = container.resolve<InventoryBridgeModuleService>("inventoryBridge")
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
   const remoteLink = container.resolve(ContainerRegistrationKeys.LINK) as {
     create(links: Record<string, Record<string, string>>[]): Promise<unknown>
   }
@@ -40,7 +41,6 @@ export default async function bootstrapThamaniInventory({ container }: ExecArgs)
   for (const config of THAMANI_INVENTORY_LOCATIONS) {
     const all = await stockLocations.listStockLocations({})
     let location = findByMetadataKey(all, "baobab_canonical_location_key", config.canonicalKey)
-    let created = false
     if (!location && config.reusesMarketPrimary)
       location = findByMetadataKey(all, "baobab_market_key", config.marketKey)
     if (location) {
@@ -58,12 +58,24 @@ export default async function bootstrapThamaniInventory({ container }: ExecArgs)
         },
         metadata: thamaniInventoryLocationMetadata(config),
       })
-      created = true
     }
-    if (created) {
+    const { data: locationLinks } = await query.graph({
+      entity: "stock_location",
+      fields: ["id", "sales_channels.id", "fulfillment_providers.id"],
+      filters: { id: location.id },
+    })
+    const linkedLocation = locationLinks[0] as {
+      sales_channels?: { id: string }[]
+      fulfillment_providers?: { id: string }[]
+    }
+    if (!linkedLocation?.sales_channels?.some((channel) => channel.id === salesChannel.id)) {
       await linkSalesChannelsToStockLocationWorkflow(container).run({
         input: { id: location.id, add: [salesChannel.id], remove: [] },
       })
+    }
+    if (
+      !linkedLocation?.fulfillment_providers?.some((provider) => provider.id === "manual_manual")
+    ) {
       await remoteLink.create([
         {
           [Modules.STOCK_LOCATION]: { stock_location_id: location.id },

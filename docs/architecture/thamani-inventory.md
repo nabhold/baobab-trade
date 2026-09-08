@@ -25,6 +25,8 @@ The `TH-` prefix is intentional: Thamani does not silently reuse ZuriBeans comme
 
 Only locations in a product's configured eligible Markets receive inventory levels. This makes the catalogue's Uganda-only and South-Africa-only test products useful isolation canaries. All other launch products receive levels at all five locations.
 
+The bootstrap inspects and repairs Sales Channel and fulfillment-provider links for both new and existing locations. A retry therefore completes a location left behind by an interrupted earlier attempt instead of mistaking mere row existence for successful provisioning.
+
 ## Reservations and reconciliation
 
 `MedusaInventoryAvailabilityAdapter` remains the native-in-Medusa implementation of `InventoryAvailabilityPort`. Gate verification creates and releases a real reservation and proves the reserved quantity rises and returns to its baseline. Available-to-sell calculation is covered independently because Medusa's aggregate `available_quantity` decoration is context-dependent. Initial ERP projections use stable idempotency keys and reconciliation records expose variance; they do not conceal it by overwriting either side. Verification accepts a correctly calculated `VARIANCE` (including stock left by an earlier integration scenario) and rejects inconsistent delta/status pairs.
