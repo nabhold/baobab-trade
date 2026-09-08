@@ -23,8 +23,8 @@ merely because the target architecture diagram has a box for it.
 | Platform Context (Tenant, lifecycle, entitlement) | Control Plane (`baobab-cp`) | ACTIVE — `HttpControlPlaneClient.resolveContext`                            | Remains Control Plane              |
 | Baobab Market registry                            | Control Plane               | PLANNED — schema published, no Market instance registered yet for ZuriBeans | Remains Control Plane              |
 | Canonical mapping / ExternalReference             | Control Plane               | PLANNED — Trade only writes a local engine-native breadcrumb today          | Remains Control Plane              |
-| Trade compliance                                  | —                           | PLANNED, no integration point built yet                                     | Trade Compliance Engine            |
-| Ledger evidence                                   | —                           | PLANNED, no integration point built yet                                     | Ledger Engine                      |
+| Trade compliance                                  | Projected adapter           | ACTIVE PORT — projected policy remains local                                | Trade Compliance Engine            |
+| Ledger evidence                                   | Disabled adapter            | BOUNDARY ONLY — no ledger authority or service                              | Ledger Engine                      |
 | Intelligence / signals                            | `baobab-pulse`              | PLANNED, no event consumer built yet                                        | Remains Pulse                      |
 
 ## Reading the "Status" column
@@ -51,3 +51,13 @@ Fulfilment or Compliance. Where a future engine is anticipated, the boundary
 is a typed contract or client (`src/baobab/contracts/`,
 `src/baobab/control-plane/client.ts`) and, where a real cross-engine
 consequence exists, an event (`src/baobab/events/`) — not a running service.
+
+## Gate 14 port inventory
+
+`OrderOrchestrationPort`, `InventoryAvailabilityPort`, `PricingDecisionPort`,
+`PaymentOrchestrationPort`, `FulfilmentPort`, `TradeCompliancePort`, and
+`LedgerEvidencePort` are typed extraction seams. Their binding registry keeps
+Orders, Inventory, Pricing, Payments and Fulfilment native in Medusa. The
+ledger adapter is deliberately disabled: defining a port is not permission to
+invent a ledger, and routing changes remain governed by Control Plane
+CapabilityBindings.
