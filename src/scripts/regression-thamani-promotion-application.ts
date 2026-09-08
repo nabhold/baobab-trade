@@ -33,6 +33,7 @@
 import {
   createCartWorkflow,
   createInventoryLevelsWorkflow,
+  createPromotionsWorkflow,
   updateCartPromotionsWorkflow,
 } from "@medusajs/core-flows"
 import type {
@@ -40,12 +41,57 @@ import type {
   ICartModuleService,
   IInventoryService,
   IProductModuleService,
+  IPromotionModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
   IStockLocationService,
 } from "@medusajs/framework/types"
-import { ContainerRegistrationKeys, Modules, PromotionActions } from "@medusajs/framework/utils"
+import {
+  ApplicationMethodTargetType,
+  ContainerRegistrationKeys,
+  Modules,
+  PromotionActions,
+} from "@medusajs/framework/utils"
 import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
+
+/**
+ * A throwaway, non-Thamani Promotion — `findThamaniPromotionConfig` returns
+ * `undefined` for it — that exists only to prove the exclusivity check
+ * catches a Thamani code stacked with *any* other code, not only with a
+ * second Thamani-known one. Created idempotently and deleted at the end.
+ */
+const REGRESSION_OTHER_PROMOTION_CODE = "REGRESSION-OTHER-PROMO"
+
+async function ensureOtherPromotion(
+  promotionService: IPromotionModuleService,
+  container: ExecArgs["container"],
+): Promise<string> {
+  const [existing] = await promotionService.listPromotions({
+    code: REGRESSION_OTHER_PROMOTION_CODE,
+  })
+  if (existing) return existing.id
+
+  const { result } = await createPromotionsWorkflow(container).run({
+    input: {
+      promotionsData: [
+        {
+          code: REGRESSION_OTHER_PROMOTION_CODE,
+          type: "standard",
+          status: "active",
+          is_automatic: false,
+          application_method: {
+            type: "percentage",
+            target_type: ApplicationMethodTargetType.ITEMS,
+            allocation: "across",
+            value: 5,
+            currency_code: "ugx",
+          },
+        },
+      ],
+    },
+  })
+  return result[0].id
+}
 
 const isErrorNamed = (error: unknown, name: string): boolean =>
   typeof error === "object" && error !== null && "name" in error && error.name === name
@@ -165,6 +211,7 @@ export default async function regressionThamaniPromotionApplication({
   const cartService = container.resolve<ICartModuleService>(Modules.CART)
   const inventoryService = container.resolve<IInventoryService>(Modules.INVENTORY)
   const stockLocationService = container.resolve<IStockLocationService>(Modules.STOCK_LOCATION)
+  const promotionService = container.resolve<IPromotionModuleService>(Modules.PROMOTION)
 
   const regions = await regionService.listRegions({}, { relations: ["countries"] })
   const ugandaRegion = findByCountryCode(regions, "UG")
@@ -186,6 +233,7 @@ export default async function regressionThamaniPromotionApplication({
   await ensureInventoryLevel(container, inventoryService, greenTea.sku, ugandaStockLocation.id)
   const instantCoffeeVariantId = instantCoffee.id
   const greenTeaVariantId = greenTea.id
+  const otherPromotionId = await ensureOtherPromotion(promotionService, container)
 
   const cartIds: string[] = []
   try {
@@ -276,8 +324,93 @@ export default async function regressionThamaniPromotionApplication({
         "Expected a Thamani promotion code applied to a ZuriBeans cart (same currency, different estate) to fail closed",
       )
     }
+
+    // Exclusivity must cover the WHOLE resulting set, not just Thamani-known
+    // codes checked against each other: a Thamani code requested together
+    // with any other code in a single ADD call must still be rejected.
+    const mixedCartId = await createTestCart(
+      container,
+      ugandaRegion.id,
+      salesChannel.id,
+      instantCoffeeVariantId,
+    )
+    cartIds.push(mixedCartId)
+    let mixedRequestRejected = false
+    try {
+      await updateCartPromotionsWorkflow(container).run({
+        input: {
+          cart_id: mixedCartId,
+          promo_codes: ["THAMANI10", REGRESSION_OTHER_PROMOTION_CODE],
+          action: PromotionActions.ADD,
+        },
+      })
+    } catch (error) {
+      if (!isErrorNamed(error, "ThamaniPromotionStackingViolationError")) throw error
+      mixedRequestRejected = true
+    }
+    if (!mixedRequestRejected) {
+      throw new Error(
+        "Expected THAMANI10 requested together with a non-Thamani code in one ADD to fail closed",
+      )
+    }
+
+    // Same policy, but the non-Thamani code arrives in a second, separate
+    // call after a Thamani code is already applied — the guard must not
+    // skip validation just because the newly requested code isn't itself
+    // Thamani-known.
+    const sequentialMixCartId = await createTestCart(
+      container,
+      ugandaRegion.id,
+      salesChannel.id,
+      greenTeaVariantId,
+    )
+    cartIds.push(sequentialMixCartId)
+    await addPromotionCode(container, sequentialMixCartId, "THAMANIFIXED2000")
+    let secondOtherRejected = false
+    try {
+      await updateCartPromotionsWorkflow(container).run({
+        input: {
+          cart_id: sequentialMixCartId,
+          promo_codes: [REGRESSION_OTHER_PROMOTION_CODE],
+          action: PromotionActions.ADD,
+        },
+      })
+    } catch (error) {
+      if (!isErrorNamed(error, "ThamaniPromotionStackingViolationError")) throw error
+      secondOtherRejected = true
+    }
+    if (!secondOtherRejected) {
+      throw new Error(
+        "Expected a non-Thamani code added after an already-applied Thamani code to fail closed",
+      )
+    }
+
+    // An omitted `action` defaults to ADD in this same workflow — the guard
+    // must validate that path too, not only an explicitly-set ADD.
+    const { result: implicitAddCart } = await createCartWorkflow(container).run({
+      input: {
+        region_id: ugandaRegion.id,
+        sales_channel_id: zuribeansSalesChannel.id,
+      },
+    })
+    cartIds.push(implicitAddCart.id)
+    let implicitActionRejected = false
+    try {
+      await updateCartPromotionsWorkflow(container).run({
+        input: { cart_id: implicitAddCart.id, promo_codes: ["THAMANI10"] },
+      })
+    } catch (error) {
+      if (!isErrorNamed(error, "ThamaniCartEstateMismatchError")) throw error
+      implicitActionRejected = true
+    }
+    if (!implicitActionRejected) {
+      throw new Error(
+        "Expected a Thamani code requested with an omitted (implicit ADD) action on a ZuriBeans cart to fail closed",
+      )
+    }
   } finally {
     if (cartIds.length > 0) await cartService.deleteCarts(cartIds)
+    await promotionService.deletePromotions([otherPromotionId])
   }
 
   container

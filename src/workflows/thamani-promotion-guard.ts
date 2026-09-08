@@ -30,6 +30,30 @@
  * `cartFieldsForRefreshSteps`, which includes `currency_code`,
  * `sales_channel_id`, and `promotions.code` — no extra query needed for
  * those three.
+ *
+ * A follow-up review on this hook itself found two more gaps:
+ *
+ *   4. `input.action` is only ever strictly `ADD`/`REMOVE`/`REPLACE` when a
+ *      caller sets it explicitly — Medusa's own default (inside this same
+ *      workflow) treats an *omitted* `action` as `ADD`, but this hook's
+ *      original `input.action !== PromotionActions.ADD` check treated
+ *      omitted as "not ADD" and skipped validation entirely.
+ *      `refreshCartItemsWorkflow` also re-invokes this workflow with
+ *      `REPLACE` (e.g. after a cart's Sales Channel or currency changes) to
+ *      re-apply its already-applied codes — that path bypassed this guard
+ *      completely, since it only ever checked `ADD`.
+ *   5. The exclusivity check only ever compared Thamani codes already in the
+ *      request against each other, not against every other code the
+ *      operation would leave applied. `promo_codes: ["THAMANI10", "OTHER"]`
+ *      in one `ADD` checked only `THAMANI10`, so Medusa applied both.
+ *
+ * Both are fixed by computing the *resulting* set of promotion codes the
+ * operation would leave on the cart (all of `existingCodes` plus the new
+ * ones for `ADD`/default, or exactly `promo_codes` for `REPLACE`) and
+ * validating that whole set — currency and estate-scope for every Thamani
+ * promotion in it, and exclusivity (at most one Promotion total) across all
+ * of it — whenever any Thamani promotion is anywhere in that resulting set,
+ * not just in what was newly requested.
  */
 import { updateCartPromotionsWorkflow } from "@medusajs/core-flows"
 import type { ISalesChannelModuleService } from "@medusajs/framework/types"
@@ -49,15 +73,27 @@ type GuardedCart = {
 }
 
 updateCartPromotionsWorkflow.hooks.validate(async ({ input, cart }, { container }) => {
-  if (input.action !== PromotionActions.ADD) return
-
-  const requestedCodes = input.promo_codes ?? []
-  const thamaniPromotions = requestedCodes
-    .map((code) => findThamaniPromotionConfig(code))
-    .filter((config) => config !== undefined)
-  if (thamaniPromotions.length === 0) return
+  // Matches this same workflow's own default a few lines further down
+  // (`data.input.action || PromotionActions.ADD`) — an omitted action is a
+  // real ADD, not a no-op to skip validation for.
+  const action = input.action ?? PromotionActions.ADD
+  if (action === PromotionActions.REMOVE) return // can only shrink the set
 
   const typedCart = cart as GuardedCart
+  const requestedCodes = input.promo_codes ?? []
+  const existingCodes = (typedCart.promotions ?? []).map((promotion) => promotion.code)
+
+  // The full set of codes this operation would leave applied to the cart —
+  // REPLACE discards whatever was there before; ADD/default merges in.
+  const resultingCodes =
+    action === PromotionActions.REPLACE
+      ? requestedCodes
+      : [...existingCodes, ...requestedCodes.filter((code) => !existingCodes.includes(code))]
+
+  const resultingThamaniPromotions = resultingCodes
+    .map((code) => findThamaniPromotionConfig(code))
+    .filter((config) => config !== undefined)
+  if (resultingThamaniPromotions.length === 0) return
 
   const salesChannelService = container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
   const salesChannel = typedCart.sales_channel_id
@@ -66,17 +102,23 @@ updateCartPromotionsWorkflow.hooks.validate(async ({ input, cart }, { container 
   const isThamaniCart =
     salesChannel?.metadata?.baobab_sales_channel_key === THAMANI_SALES_CHANNEL_KEY
   if (!isThamaniCart) {
-    throw new ThamaniCartEstateMismatchError(thamaniPromotions[0].code, typedCart.sales_channel_id)
+    throw new ThamaniCartEstateMismatchError(
+      resultingThamaniPromotions[0].code,
+      typedCart.sales_channel_id,
+    )
   }
 
-  // Simulate applying the requested codes one at a time against the cart's
-  // already-applied codes, so two Thamani codes requested together in one
-  // call are checked against each other too, not just against what was
-  // already on the cart before this request.
-  let appliedCodes = (typedCart.promotions ?? []).map((promotion) => promotion.code)
-  for (const config of thamaniPromotions) {
+  for (const config of resultingThamaniPromotions) {
     assertPromotionCurrencyMatchesCart(config, typedCart.currency_code)
-    assertExclusivePromotionStacking(appliedCodes, config.code)
-    appliedCodes = [...appliedCodes, config.code]
+  }
+
+  // Exclusivity (at most one Promotion total) applies across the *whole*
+  // resulting set once any Thamani promotion is in it — not just between
+  // Thamani codes — so a non-Thamani code requested alongside or already
+  // applied next to one is caught too.
+  let appliedSoFar: string[] = []
+  for (const code of resultingCodes) {
+    assertExclusivePromotionStacking(appliedSoFar, code)
+    appliedSoFar = [...appliedSoFar, code]
   }
 })
