@@ -1,19 +1,40 @@
 /**
- * DANGER — THIS SCRIPT MUTATES LIVE DATA. It creates two disposable test
- * Carts in the Thamani Uganda Region/Sales Channel, applies real Promotion
- * codes to them via `applyThamaniPromotion`, and asserts the computed
- * discount — then deletes both Carts. Medusa's Promotion module only ever
- * computes a discount against a Cart (unlike `ThamaniPricingDecisionPort`,
- * which needs only a bare variant), so proving Gate 9's two demonstration
- * Promotions actually compute the right amount, and that the exclusive
- * stacking policy actually blocks a second code, requires creating this
- * throwaway commerce state. Following the same lesson Gate 7 review caught
- * (`verify-thamani-search.ts` must stay read-only), this mutation lives in
- * its own script — never inside `verify:thamani-promotions` — and must
- * only run against a disposable database (CI's ephemeral Postgres, or a
- * local scratch database), never a persistent or production environment.
+ * DANGER — THIS SCRIPT MUTATES LIVE DATA. It creates disposable test Carts
+ * in the Thamani Uganda Region/Sales Channel (and, for one case, the
+ * ZuriBeans Uganda Sales Channel), applies real Promotion codes to them via
+ * Medusa's own `updateCartPromotionsWorkflow` — the same workflow Medusa's
+ * Store API route uses — and asserts the computed discount, then deletes
+ * every Cart it created. Medusa's Promotion module only ever computes a
+ * discount against a Cart (unlike `ThamaniPricingDecisionPort`, which needs
+ * only a bare variant), so proving Gate 9's two demonstration Promotions
+ * actually compute the right amount, that the exclusive stacking policy
+ * actually blocks a second code, and that a ZuriBeans cart cannot use a
+ * Thamani code, requires creating this throwaway commerce state. Following
+ * the same lesson Gate 7 review caught (`verify-thamani-search.ts` must stay
+ * read-only), this mutation lives in its own script — never inside
+ * `verify:thamani-promotions` — and must only run against a disposable
+ * database (CI's ephemeral Postgres, or a local scratch database), never a
+ * persistent or production environment.
+ *
+ * This calls `updateCartPromotionsWorkflow` directly, not a wrapper: the
+ * enforcement (`src/workflows/thamani-promotion-guard.ts`) is a hook
+ * registered on the workflow itself, so it applies here exactly the same
+ * way it would to a Store API request — proving the guard is not
+ * bypassable, which is the whole point of this regression.
+ *
+ * An error thrown *inside* a workflow step (the hook) crosses Medusa's
+ * transaction-orchestrator boundary on its way back to `.run()`'s caller —
+ * it comes out the other side as a plain object (`constructor.name ===
+ * "Object"`, `instanceof` no longer matches the original class), not the
+ * original error instance. `.name`, `.message`, and any custom own-
+ * enumerable fields (`currentlyAppliedCode`, `cartSalesChannelId`, etc.)
+ * survive intact, so these checks match on `.name` rather than `instanceof`.
  */
-import { createCartWorkflow, createInventoryLevelsWorkflow } from "@medusajs/core-flows"
+import {
+  createCartWorkflow,
+  createInventoryLevelsWorkflow,
+  updateCartPromotionsWorkflow,
+} from "@medusajs/core-flows"
 import type {
   ExecArgs,
   ICartModuleService,
@@ -23,12 +44,21 @@ import type {
   ISalesChannelModuleService,
   IStockLocationService,
 } from "@medusajs/framework/types"
-import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
-import {
-  applyThamaniPromotion,
-  ThamaniPromotionStackingViolationError,
-} from "../baobab/thamani/promotions"
+import { ContainerRegistrationKeys, Modules, PromotionActions } from "@medusajs/framework/utils"
 import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
+
+const isErrorNamed = (error: unknown, name: string): boolean =>
+  typeof error === "object" && error !== null && "name" in error && error.name === name
+
+async function addPromotionCode(
+  container: ExecArgs["container"],
+  cartId: string,
+  code: string,
+): Promise<void> {
+  await updateCartPromotionsWorkflow(container).run({
+    input: { cart_id: cartId, promo_codes: [code], action: PromotionActions.ADD },
+  })
+}
 
 async function resolveVariant(
   productService: IProductModuleService,
@@ -168,7 +198,7 @@ export default async function regressionThamaniPromotionApplication({
       instantCoffeeVariantId,
     )
     cartIds.push(percentageCartId)
-    await applyThamaniPromotion(container, percentageCartId, "THAMANI10")
+    await addPromotionCode(container, percentageCartId, "THAMANI10")
     const afterPercentage = await readCartItemDiscount(container, percentageCartId)
     if (afterPercentage.discount !== 2_200) {
       throw new Error(
@@ -183,9 +213,9 @@ export default async function regressionThamaniPromotionApplication({
     // while THAMANI10 is already applied, and must never reach Medusa.
     let stackingRejected = false
     try {
-      await applyThamaniPromotion(container, percentageCartId, "THAMANIFIXED2000")
+      await addPromotionCode(container, percentageCartId, "THAMANIFIXED2000")
     } catch (error) {
-      if (!(error instanceof ThamaniPromotionStackingViolationError)) throw error
+      if (!isErrorNamed(error, "ThamaniPromotionStackingViolationError")) throw error
       stackingRejected = true
     }
     if (!stackingRejected) {
@@ -209,11 +239,41 @@ export default async function regressionThamaniPromotionApplication({
       greenTeaVariantId,
     )
     cartIds.push(fixedCartId)
-    await applyThamaniPromotion(container, fixedCartId, "THAMANIFIXED2000")
+    await addPromotionCode(container, fixedCartId, "THAMANIFIXED2000")
     const afterFixed = await readCartItemDiscount(container, fixedCartId)
     if (afterFixed.discount !== 2_000) {
       throw new Error(
         `Expected THAMANIFIXED2000 to discount 2000 UGX off the green tea, got ${afterFixed.discount}`,
+      )
+    }
+
+    // Estate isolation: ZuriBeans Uganda shares Thamani Uganda's Region and
+    // currency (UGX) — currency alone must never be treated as a Market/
+    // estate identifier, or a Thamani consumer promotion could be applied
+    // to a ZuriBeans B2B cart.
+    const zuribeansSalesChannel = findByMetadataKey(
+      salesChannels,
+      "baobab_sales_channel_key",
+      "zuribeans_b2b",
+    )
+    if (!zuribeansSalesChannel) {
+      throw new Error("Run bootstrap:market before this regression (no ZuriBeans Sales Channel)")
+    }
+    const { result: zuribeansCart } = await createCartWorkflow(container).run({
+      input: { region_id: ugandaRegion.id, sales_channel_id: zuribeansSalesChannel.id },
+    })
+    cartIds.push(zuribeansCart.id)
+
+    let estateMismatchRejected = false
+    try {
+      await addPromotionCode(container, zuribeansCart.id, "THAMANI10")
+    } catch (error) {
+      if (!isErrorNamed(error, "ThamaniCartEstateMismatchError")) throw error
+      estateMismatchRejected = true
+    }
+    if (!estateMismatchRejected) {
+      throw new Error(
+        "Expected a Thamani promotion code applied to a ZuriBeans cart (same currency, different estate) to fail closed",
       )
     }
   } finally {
