@@ -20,4 +20,7 @@ Redis queues and keys are namespaced through `REDIS_KEY_PREFIX`, `REDIS_EVENT_QU
 
 S3 credentials and SendGrid credentials must be injected by the deployment platform. They must never be committed. `S3_FORCE_PATH_STYLE=true` supports compatible providers such as MinIO; ordinary AWS S3 should normally leave it false.
 
-The canonical transactional outbox, metrics, distributed traces, alerting, and dashboards are completed in later gates. Redis Event Bus does not constitute the cross-engine outbox promised by Gate 13.
+The canonical transactional outbox is implemented in Gate 13. Gate 16 defines
+bounded-cardinality metrics, W3C trace propagation, diagnostics, dashboards and
+alert semantics. Redis Event Bus remains transport rather than durable outbox
+authority. Deployment-owned collectors and alert routing consume these signals.
