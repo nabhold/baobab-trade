@@ -35,6 +35,7 @@
     "verify:tax": "medusa exec ./src/scripts/verify-tax.ts",
     "verify:trade-readiness": "medusa exec ./src/scripts/verify-trade-readiness.ts",
     "verify:erp-integration": "medusa exec ./src/scripts/verify-erp-integration.ts",
+    "verify:event-outbox": "medusa exec ./src/scripts/verify-event-outbox.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

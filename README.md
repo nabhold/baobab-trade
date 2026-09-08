@@ -89,6 +89,11 @@ Shipment, and financial-consequence mappings plus durable Order/Fulfilment
 projections and ERP reconciliation with `npm run bootstrap:erp-integration`.
 See `docs/architecture/zuribeans-erp-integration.md`.
 
+Gate 13 adds the transactional event outbox, canonical envelope publication,
+bounded retry/dead-letter state, duplicate-safe consumer receipts, distributed
+correlation and event reconciliation with `npm run verify:event-outbox`. See
+`docs/architecture/zuribeans-events-outbox.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
@@ -136,6 +141,7 @@ check it, including the deliberately single-Market SKUs.
 - `src/modules/tax-bridge` — tax rules, B2B profiles, determinations, and reconciliation persistence.
 - `src/modules/trade-readiness` — trade lane, decision, and cross-border transaction persistence.
 - `src/modules/erp-integration` — external mappings and ERP integration projections.
+- `src/modules/event-outbox` — durable publication, consumer receipts, and event reconciliation.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning (shared provisioning logic in `src/baobab/market/provisioning.ts`).
 - `src/scripts/bootstrap-thamani-market.ts` / `bootstrap-thamani-catalogue.ts` — Thamani B2C provisioning.
 - `runtime` — infrastructure-facing runtime requirements.

@@ -137,6 +137,9 @@ jobs:
       - name: Verify Gate 12 ERP projections and reconciliation
         run: npm run verify:erp-integration
 
+      - name: Verify Gate 13 durable events and outbox
+        run: npm run verify:event-outbox
+
       - name: Bootstrap Thamani B2C Uganda and South Africa Market projections
         run: npm run bootstrap:thamani-market
 
