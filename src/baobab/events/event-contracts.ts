@@ -156,6 +156,55 @@ export const FULFILMENT_EVENT_TYPES = {
   reconciled: "com.nabhold.commerce.fulfilment.reconciled.v1",
 } as const
 
+export const TAX_EVENT_TYPES = {
+  determined: "com.nabhold.commerce.tax.determined.v1",
+  reconciliationRequired: "com.nabhold.commerce.tax.reconciliation-required.v1",
+  reconciled: "com.nabhold.commerce.tax.reconciled.v1",
+  profileVerified: "com.nabhold.commerce.tax-profile.verified.v1",
+} as const
+
+export const TRADE_READINESS_EVENT_TYPES = {
+  classificationAssigned: "com.nabhold.trade.classification.assigned.v1",
+  complianceDecided: "com.nabhold.trade.compliance.decided.v1",
+  crossBorderCreated: "com.nabhold.trade.cross-border-order.created.v1",
+} as const
+
+export type TradeReadinessEventPayload = {
+  transaction_reference: string
+  order_reference: string
+  market_key: string
+  legal_seller_key: string
+  origin_country: string
+  destination_country: string
+  incoterm: string
+  hs_classification_references: string[]
+  trade_uoms: string[]
+  customs_procedure_reference: string
+  compliance_decision_reference: string
+  compliance_status: "APPROVED" | "REJECTED" | "REVIEW_REQUIRED"
+}
+
+export type TaxEventPayload = {
+  determination_reference: string
+  organisation_id: string
+  market_key: string
+  legal_seller_key: string
+  jurisdiction_key: string
+  product_tax_classification: string
+  transaction_type: string
+  treatment: "STANDARD" | "ZERO_RATED" | "EXEMPT" | "REVERSE_CHARGE"
+  currency: string
+  taxable_basis_minor: number
+  tax_amount_minor: number
+  rule_reference: string
+  rule_version: string
+  provider_key: string
+  calculation_reference: string
+  source_authority: string
+  effective_at: string
+  legal_reason?: string
+}
+
 export type FulfilmentEventPayload = {
   fulfilment_reference: string
   order_reference: string

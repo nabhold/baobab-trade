@@ -119,6 +119,18 @@ jobs:
       - name: Verify Gate 9 fulfilment, tracking, and reconciliation
         run: npm run verify:fulfilment
 
+      - name: Bootstrap Gate 10 tax contexts
+        run: npm run bootstrap:tax
+
+      - name: Verify Gate 10 effective tax and reconciliation
+        run: npm run verify:tax
+
+      - name: Bootstrap Gate 11 trade lanes
+        run: npm run bootstrap:trade-readiness
+
+      - name: Verify Gate 11 trade-readiness metadata
+        run: npm run verify:trade-readiness
+
       - name: Bootstrap Thamani B2C Uganda and South Africa Market projections
         run: npm run bootstrap:thamani-market
 
