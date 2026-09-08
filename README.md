@@ -109,6 +109,11 @@ operational diagnostics, and dashboard/alert definitions. See
 Gate 17 adds machine-readable production controls and automated release
 conformance gates. See `docs/operations/ci-cd.md`.
 
+Gate 18 adds the deterministic ZuriBeans Uganda–South Africa simulation pack
+covering ten products, B2B parties, six warehouses, tax/tariff assumptions,
+cross-border scenarios and ERP expectations. Run `npm run verify:simulation`;
+see `docs/simulation/zuribeans-ug-za.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
