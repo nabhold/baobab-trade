@@ -39,6 +39,8 @@
     "verify:tax": "medusa exec ./src/scripts/verify-tax.ts",
     "verify:trade-readiness": "medusa exec ./src/scripts/verify-trade-readiness.ts",
     "verify:erp-integration": "medusa exec ./src/scripts/verify-erp-integration.ts",
+    "verify:event-outbox": "medusa exec ./src/scripts/verify-event-outbox.ts",
+    "verify:simulation": "medusa exec ./src/scripts/verify-simulation.ts",
     "verify:thamani-search": "medusa exec ./src/scripts/verify-thamani-search.ts",
     "verify:thamani-pricing": "medusa exec ./src/scripts/verify-thamani-pricing.ts",
     "verify:thamani-promotions": "medusa exec ./src/scripts/verify-thamani-promotions.ts",
@@ -51,6 +53,8 @@
     "test": "vitest run",
     "test:contract": "vitest run tests/tenant-context.test.ts tests/canonical-mapping-contract.test.ts tests/control-plane-client.test.ts",
     "test:isolation": "vitest run tests/commerce-context.test.ts",
+    "test:security": "vitest run tests/b2b-policy.test.ts tests/b2b-threat-model.test.ts tests/event-contracts.test.ts",
+    "test:conformance": "vitest run tests/production-conformance.test.ts",
     "test:watch": "vitest",
     "verify:core-modules": "medusa exec ./src/scripts/verify-core-modules.ts",
     "verify:infrastructure": "medusa exec ./src/scripts/verify-infrastructure.ts"

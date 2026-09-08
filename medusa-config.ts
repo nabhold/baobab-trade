@@ -32,6 +32,7 @@ export default defineConfig({
     { resolve: "./src/modules/tax-bridge" },
     { resolve: "./src/modules/trade-readiness" },
     { resolve: "./src/modules/erp-integration" },
+    { resolve: "./src/modules/event-outbox" },
     {
       resolve: "@medusajs/medusa/search",
       options: {

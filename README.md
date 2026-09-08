@@ -89,6 +89,31 @@ Shipment, and financial-consequence mappings plus durable Order/Fulfilment
 projections and ERP reconciliation with `npm run bootstrap:erp-integration`.
 See `docs/architecture/zuribeans-erp-integration.md`.
 
+Gate 13 adds the transactional event outbox, canonical envelope publication,
+bounded retry/dead-letter state, duplicate-safe consumer receipts, distributed
+correlation and event reconciliation with `npm run verify:event-outbox`. See
+`docs/architecture/zuribeans-events-outbox.md`.
+
+Gate 14 confirms typed extraction ports for Order, Inventory, Pricing,
+Payments, Fulfilment, Trade Compliance, and future Ledger Evidence while
+keeping native Medusa implementations active. See
+`docs/architecture/engine-boundaries.md`.
+
+Gate 15 completes B2B isolation and adversarial authorization tests. See
+`docs/security/zuribeans-b2b-threat-model.md`.
+
+Gate 16 adds correlated logs, bounded-cardinality metrics, W3C trace handling,
+operational diagnostics, and dashboard/alert definitions. See
+`docs/operations/observability.md`.
+
+Gate 17 adds machine-readable production controls and automated release
+conformance gates. See `docs/operations/ci-cd.md`.
+
+Gate 18 adds the deterministic ZuriBeans Uganda–South Africa simulation pack
+covering ten products, B2B parties, six warehouses, tax/tariff assumptions,
+cross-border scenarios and ERP expectations. Run `npm run verify:simulation`;
+see `docs/simulation/zuribeans-ug-za.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
@@ -166,6 +191,7 @@ variants) and is deliberately not part of the read-only health check. See
 - `src/modules/tax-bridge` — tax rules, B2B profiles, determinations, and reconciliation persistence.
 - `src/modules/trade-readiness` — trade lane, decision, and cross-border transaction persistence.
 - `src/modules/erp-integration` — external mappings and ERP integration projections.
+- `src/modules/event-outbox` — durable publication, consumer receipts, and event reconciliation.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning (shared provisioning logic in `src/baobab/market/provisioning.ts`).
 - `src/scripts/bootstrap-thamani-market.ts` / `bootstrap-thamani-catalogue.ts` / `bootstrap-thamani-search.ts` / `bootstrap-thamani-pricing.ts` — Thamani B2C provisioning.
 - `src/search/thamani-product-index.ts` — the `thamani_product` Search Module index definition.
