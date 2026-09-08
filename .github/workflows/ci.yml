@@ -119,6 +119,12 @@ jobs:
       - name: Verify Gate 9 fulfilment, tracking, and reconciliation
         run: npm run verify:fulfilment
 
+      - name: Bootstrap Gate 10 tax contexts
+        run: npm run bootstrap:tax
+
+      - name: Verify Gate 10 effective tax and reconciliation
+        run: npm run verify:tax
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

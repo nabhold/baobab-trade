@@ -28,6 +28,7 @@ export default defineConfig({
     { resolve: "./src/modules/inventory-bridge" },
     { resolve: "./src/modules/payment-bridge" },
     { resolve: "./src/modules/fulfilment-bridge" },
+    { resolve: "./src/modules/tax-bridge" },
   ],
   plugins: [],
 })
