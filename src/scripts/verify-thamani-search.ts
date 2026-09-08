@@ -87,3 +87,9 @@ export default async function verifyThamaniSearch({ container }: ExecArgs): Prom
 
   container.resolve("logger").info("Verified Gate 7 Thamani B2C search health and Market isolation")
 }
+
+// This is a read-only health check, safe to run against any environment
+// including production. The eligibility-suspension regression scenario that
+// used to live here now lives in `regression-thamani-eligibility-sync.ts`,
+// which mutates live data and must only run against a disposable database —
+// see that file and `docs/architecture/thamani-search.md` for why.

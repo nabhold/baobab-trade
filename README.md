@@ -116,7 +116,10 @@ built-in Postgres provider — no external search service required yet. Run
 `npm run migrate:search` once after `npm run migrate`, then
 `npm run bootstrap:thamani-search` to (re)build the `thamani_product` index
 and `npm run verify:thamani-search` to check its health and Market
-isolation. See `docs/architecture/thamani-search.md`.
+isolation. `npm run regression:thamani-eligibility-sync` is a separate,
+disposable-database-only fixture proving an eligibility change reaches
+search after a bootstrap resync — it mutates data and is deliberately not
+part of the read-only health check. See `docs/architecture/thamani-search.md`.
 
 Gate 8 adds scheduled sale pricing on top of Gate 6's standard UGX/ZAR
 prices, plus the `ThamaniPricingDecisionPort` a future checkout calls

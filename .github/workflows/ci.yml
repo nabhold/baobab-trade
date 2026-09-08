@@ -157,6 +157,9 @@ jobs:
       - name: Verify Thamani B2C search health and Market isolation
         run: npm run verify:thamani-search
 
+      - name: Regression — Thamani B2C eligibility suspension reaches search (mutates this disposable database only)
+        run: npm run regression:thamani-eligibility-sync
+
       - name: Bootstrap Thamani B2C sale pricing
         run: npm run bootstrap:thamani-pricing
 

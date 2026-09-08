@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  deriveActiveEligibleMarketKeys,
   isThamaniProduct,
   toThamaniSearchDocument,
   type ThamaniProductQueryResult,
@@ -112,5 +113,33 @@ describe("toThamaniSearchDocument", () => {
     const document = toThamaniSearchDocument(zarOnly)
     expect(document.price_zar).toBe(180)
     expect(document.price_ugx).toBeNull()
+  })
+})
+
+describe("deriveActiveEligibleMarketKeys", () => {
+  it("keeps only ACTIVE eligibility records", () => {
+    expect(
+      deriveActiveEligibleMarketKeys([
+        { market_key: "thamani_ug", status: "ACTIVE" },
+        { market_key: "thamani_za", status: "ACTIVE" },
+      ]),
+    ).toEqual(["thamani_ug", "thamani_za"])
+  })
+
+  it("excludes a SUSPENDED or WITHDRAWN record — this is the Market isolation fix", () => {
+    expect(
+      deriveActiveEligibleMarketKeys([
+        { market_key: "thamani_ug", status: "ACTIVE" },
+        { market_key: "thamani_za", status: "SUSPENDED" },
+      ]),
+    ).toEqual(["thamani_ug"])
+
+    expect(
+      deriveActiveEligibleMarketKeys([{ market_key: "thamani_ug", status: "WITHDRAWN" }]),
+    ).toEqual([])
+  })
+
+  it("returns an empty list for no eligibility records at all", () => {
+    expect(deriveActiveEligibleMarketKeys([])).toEqual([])
   })
 })

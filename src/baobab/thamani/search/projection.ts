@@ -77,6 +77,25 @@ export function isThamaniProduct(
   return metadata?.baobab_catalogue === THAMANI_CATALOGUE_METADATA_TAG
 }
 
+export type ThamaniMarketEligibilityRecordLike = {
+  market_key: string
+  status: "ACTIVE" | "SUSPENDED" | "WITHDRAWN"
+}
+
+/**
+ * The `thamani_eligible_markets` metadata field — and so the search index's
+ * Market isolation filter — must reflect the `thamani` module's own
+ * `MarketProductEligibility` rows, the authority for eligibility, not the
+ * static catalogue config a product was originally created from. A
+ * `SUSPENDED`/`WITHDRAWN` row must narrow this list; only `ACTIVE` rows
+ * count as eligible.
+ */
+export function deriveActiveEligibleMarketKeys(
+  records: readonly ThamaniMarketEligibilityRecordLike[],
+): string[] {
+  return records.filter((record) => record.status === "ACTIVE").map((record) => record.market_key)
+}
+
 const asNullableString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null
 
