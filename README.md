@@ -94,6 +94,11 @@ bounded retry/dead-letter state, duplicate-safe consumer receipts, distributed
 correlation and event reconciliation with `npm run verify:event-outbox`. See
 `docs/architecture/zuribeans-events-outbox.md`.
 
+Gate 14 confirms typed extraction ports for Order, Inventory, Pricing,
+Payments, Fulfilment, Trade Compliance, and future Ledger Evidence while
+keeping native Medusa implementations active. See
+`docs/architecture/engine-boundaries.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
