@@ -118,11 +118,11 @@ see `docs/simulation/zuribeans-ug-za.md`.
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
 engine instance — a strict B2C retailer with many independent suppliers, not
-a marketplace and not a second ZuriBeans storefront. Gates 0-9 (Discovery
-through Promotions) are implemented; full inventory, regional payments,
-fulfilment providers, tax provider integration, cross-border trade
-readiness, ERP integration, events, Store Credit, and the simulation
-dataset remain planned. See `docs/architecture/thamani-b2c-foundation.md`
+a marketplace and not a second ZuriBeans storefront. Gates 0-10 (Discovery
+through Inventory) are implemented; regional payments, fulfilment providers,
+tax provider integration, cross-border trade readiness, ERP integration,
+events, Store Credit, and the simulation dataset remain planned. See
+`docs/architecture/thamani-b2c-foundation.md`
 for Gates 0-6, including the two Medusa store-wide constraints (one Region
 per country, globally unique Fulfillment Service Zone names) that shape how
 the two estates share this engine.
@@ -170,6 +170,13 @@ Gate-10-independent stock level for its two demo variants) and is
 deliberately not part of the read-only health check. See
 `docs/architecture/thamani-promotions.md`.
 
+Gate 10 adds five Thamani-owned Stock Locations, eligible-Market inventory
+levels for all 38 retail products, native Medusa reservation checks, and
+replay-safe ERP projection/reconciliation records. Run
+`npm run bootstrap:thamani-inventory` and
+`npm run verify:thamani-inventory`; see
+`docs/architecture/thamani-inventory.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -183,7 +190,7 @@ deliberately not part of the read-only health check. See
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
 - `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
-- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, pricing-decision, and promotion definitions.
+- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, pricing-decision, promotion, and inventory definitions.
 - `src/baobab/tax` — contextual tax policy, effective-dated provider, and reconciliation.
 - `src/baobab/trade-readiness` — cross-border metadata and compliance-provider boundary.
 - `src/baobab/erp-integration` — durable ERP projection and reconciliation policy.

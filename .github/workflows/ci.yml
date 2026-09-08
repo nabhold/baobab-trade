@@ -183,6 +183,12 @@ jobs:
       - name: Regression — Thamani B2C promotion discount computation and exclusive stacking (mutates this disposable database only)
         run: npm run regression:thamani-promotion-application
 
+      - name: Bootstrap Thamani Gate 10 multi-location inventory
+        run: npm run bootstrap:thamani-inventory
+
+      - name: Verify Thamani Gate 10 availability, reservations, isolation, and ERP reconciliation
+        run: npm run verify:thamani-inventory
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
