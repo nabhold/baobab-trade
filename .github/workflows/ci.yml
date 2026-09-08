@@ -157,6 +157,12 @@ jobs:
       - name: Verify Thamani B2C search health and Market isolation
         run: npm run verify:thamani-search
 
+      - name: Bootstrap Thamani B2C sale pricing
+        run: npm run bootstrap:thamani-pricing
+
+      - name: Verify Thamani B2C sale pricing and effective dating
+        run: npm run verify:thamani-pricing
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
