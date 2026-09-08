@@ -1,8 +1,5 @@
 import type { ExecArgs } from "@medusajs/framework/types"
-import {
-  ZURIBEANS_LAUNCH_MARKETS,
-  getMarketBootstrapConfig,
-} from "../baobab/market/market-config"
+import { ZURIBEANS_LAUNCH_MARKETS, getMarketBootstrapConfig } from "../baobab/market/market-config"
 import { bootstrapMarket } from "../baobab/market/provisioning"
 
 /**

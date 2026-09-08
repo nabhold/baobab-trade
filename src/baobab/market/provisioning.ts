@@ -9,7 +9,11 @@ import type {
   IStoreModuleService,
   ITaxModuleService,
 } from "@medusajs/framework/types"
-import { toMedusaCurrencyCode, withAddedStoreCurrency, type MarketBootstrapConfig } from "./market-config"
+import {
+  toMedusaCurrencyCode,
+  withAddedStoreCurrency,
+  type MarketBootstrapConfig,
+} from "./market-config"
 import {
   findByMarketKey,
   findByMetadataKey,
