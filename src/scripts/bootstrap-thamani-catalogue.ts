@@ -13,6 +13,7 @@ import {
   type ThamaniProductConfig,
 } from "../baobab/thamani/catalogue"
 import { THAMANI_SUPPLIERS } from "../baobab/thamani/suppliers"
+import { deriveActiveEligibleMarketKeys } from "../baobab/thamani/search/projection"
 import { findByMetadataKey } from "../baobab/market/mapping"
 import type ThamaniModuleService from "../modules/thamani/service"
 
@@ -21,8 +22,16 @@ import type ThamaniModuleService from "../modules/thamani/service"
  * (Gate 7) reads back off the product's native `metadata` rather than
  * joining to the `thamani` module's own tables — see
  * `src/baobab/thamani/search/projection.ts`.
+ *
+ * `activeMarketKeys` must come from the `thamani` module's own
+ * `MarketProductEligibility` rows, not from `config.eligibleMarkets`: those
+ * rows, not the static catalogue config, are the authority for eligibility,
+ * and a row a later process suspends or withdraws must narrow this field.
  */
-function searchProjectionMetadata(config: ThamaniProductConfig): Record<string, unknown> {
+function searchProjectionMetadata(
+  config: ThamaniProductConfig,
+  activeMarketKeys: readonly string[],
+): Record<string, unknown> {
   return {
     baobab_canonical_product_key: config.canonicalKey,
     baobab_catalogue: "thamani_b2c",
@@ -31,7 +40,7 @@ function searchProjectionMetadata(config: ThamaniProductConfig): Record<string, 
     thamani_country_of_origin: config.countryOfOrigin,
     thamani_supplier_key: config.supplierKey,
     thamani_consumer_uom: config.consumerUom,
-    thamani_eligible_markets: [...config.eligibleMarkets],
+    thamani_eligible_markets: [...activeMarketKeys],
   }
 }
 
@@ -191,7 +200,10 @@ export default async function bootstrapThamaniCatalogue({ container }: ExecArgs)
                   })),
                 },
               ],
-              metadata: searchProjectionMetadata(config),
+              // Initial value only: eligibility rows don't exist until
+              // ensureRetailProjection runs just below, so this can only
+              // seed from config. The refresh after it is authoritative.
+              metadata: searchProjectionMetadata(config, config.eligibleMarkets),
             },
           ],
         },
@@ -204,12 +216,18 @@ export default async function bootstrapThamaniCatalogue({ container }: ExecArgs)
     if (!variant) throw new Error(`Product ${config.handle} has no retail variant`)
     await ensureRetailProjection(thamani, product.id, supplierIdByKey, config)
 
-    // Keep the Gate 7 search-projection metadata in sync with this config on
-    // every run, not just at creation: search reads from `metadata`, never
-    // from the `thamani` module's own tables, so a later catalogue change
-    // (e.g. widening a product's eligible Markets) must reach it here too.
+    // Keep the Gate 7 search-projection metadata in sync on every run, not
+    // just at creation: search reads from `metadata`, never from the
+    // `thamani` module's own tables, so both a catalogue change and a
+    // direct eligibility-status change must reach it here. Eligibility is
+    // read fresh from `thamani`'s own records — the authority — rather than
+    // assumed from `config.eligibleMarkets`.
+    const eligibilityRows = await thamani.listMarketProductEligibilities({
+      product_id: product.id,
+    })
+    const activeMarketKeys = deriveActiveEligibleMarketKeys(eligibilityRows)
     await productService.updateProducts(product.id, {
-      metadata: { ...product.metadata, ...searchProjectionMetadata(config) },
+      metadata: { ...product.metadata, ...searchProjectionMetadata(config, activeMarketKeys) },
     })
   }
 
