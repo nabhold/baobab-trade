@@ -25,6 +25,7 @@ export default defineConfig({
   modules: [
     ...getInfrastructureModules(),
     { resolve: "./src/modules/b2b" },
+    { resolve: "./src/modules/thamani" },
     { resolve: "./src/modules/inventory-bridge" },
     { resolve: "./src/modules/payment-bridge" },
     { resolve: "./src/modules/fulfilment-bridge" },

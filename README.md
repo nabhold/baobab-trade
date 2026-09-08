@@ -89,6 +89,28 @@ Shipment, and financial-consequence mappings plus durable Order/Fulfilment
 projections and ERP reconciliation with `npm run bootstrap:erp-integration`.
 See `docs/architecture/zuribeans-erp-integration.md`.
 
+## Thamani B2C
+
+Thamani is a second, coexisting Baobab Digital Estate on this same Trade
+engine instance — a strict B2C retailer with many independent suppliers, not
+a marketplace and not a second ZuriBeans storefront. Gates 0-6 (Discovery
+through the initial retail catalogue) are implemented; Search, promotions,
+full inventory, regional payments, fulfilment providers, tax provider
+integration, cross-border trade readiness, ERP integration, events, Store
+Credit, and the simulation dataset remain planned. See
+`docs/architecture/thamani-b2c-foundation.md` for the complete account,
+including the two Medusa store-wide constraints (one Region per country,
+globally unique Fulfillment Service Zone names) that shape how the two
+estates share this engine.
+
+Run `npm run bootstrap:thamani-market` to provision the `thamani_ug`/
+`thamani_za` Markets (their own `thamani_b2c` Sales Channel and Stock
+Locations, sharing each country's Region and Tax Region with ZuriBeans where
+one already exists) and `npm run verify:thamani-market` to check isolation.
+Run `npm run bootstrap:thamani-catalogue` to provision the ~38-product
+multi-supplier retail catalogue and `npm run verify:thamani-catalogue` to
+check it, including the deliberately single-Market SKUs.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -102,17 +124,20 @@ See `docs/architecture/zuribeans-erp-integration.md`.
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
 - `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
+- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, and supplier definitions.
 - `src/baobab/tax` — contextual tax policy, effective-dated provider, and reconciliation.
 - `src/baobab/trade-readiness` — cross-border metadata and compliance-provider boundary.
 - `src/baobab/erp-integration` — durable ERP projection and reconciliation policy.
 - `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
+- `src/modules/thamani` — durable Thamani B2C Medusa module (suppliers, retail profiles, Market eligibility).
 - `src/modules/inventory-bridge` — ERP projections and canonical location mappings.
 - `src/modules/payment-bridge` — payment policy, status, and reconciliation persistence.
 - `src/modules/fulfilment-bridge` — fulfilment, tracking, and logistics reconciliation persistence.
 - `src/modules/tax-bridge` — tax rules, B2B profiles, determinations, and reconciliation persistence.
 - `src/modules/trade-readiness` — trade lane, decision, and cross-border transaction persistence.
 - `src/modules/erp-integration` — external mappings and ERP integration projections.
-- `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
+- `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning (shared provisioning logic in `src/baobab/market/provisioning.ts`).
+- `src/scripts/bootstrap-thamani-market.ts` / `bootstrap-thamani-catalogue.ts` — Thamani B2C provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.
 

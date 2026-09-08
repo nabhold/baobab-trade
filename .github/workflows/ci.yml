@@ -137,6 +137,18 @@ jobs:
       - name: Verify Gate 12 ERP projections and reconciliation
         run: npm run verify:erp-integration
 
+      - name: Bootstrap Thamani B2C Uganda and South Africa Market projections
+        run: npm run bootstrap:thamani-market
+
+      - name: Verify Thamani B2C Market projection isolation
+        run: npm run verify:thamani-market
+
+      - name: Bootstrap Thamani B2C retail catalogue and suppliers
+        run: npm run bootstrap:thamani-catalogue
+
+      - name: Verify Thamani B2C catalogue and supplier projections
+        run: npm run verify:thamani-catalogue
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

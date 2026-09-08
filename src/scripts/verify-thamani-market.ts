@@ -8,7 +8,8 @@ import type {
   IStoreModuleService,
   ITaxModuleService,
 } from "@medusajs/framework/types"
-import { ZURIBEANS_LAUNCH_MARKETS, toMedusaCurrencyCode } from "../baobab/market/market-config"
+import { THAMANI_LAUNCH_MARKETS } from "../baobab/market/thamani-market-config"
+import { toMedusaCurrencyCode } from "../baobab/market/market-config"
 import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
 
 const required = <T>(value: T | undefined, message: string): T => {
@@ -32,16 +33,16 @@ export default async function ({ container }: ExecArgs) {
     .resolve<IStoreModuleService>(Modules.STORE)
     .listStores({}, { relations: ["supported_currencies"] })
 
-  required(
-    findByMetadataKey(channels, "baobab_sales_channel_key", "zuribeans_b2b"),
-    "Principal ZuriBeans B2B Sales Channel is missing",
+  const thamaniChannel = required(
+    findByMetadataKey(channels, "baobab_sales_channel_key", "thamani_b2c"),
+    "Principal Thamani B2C Sales Channel is missing",
   )
 
-  for (const config of ZURIBEANS_LAUNCH_MARKETS) {
-    // Region is looked up by country, not by the `zuribeans_*` market-key
-    // tag: Medusa allows only one Region per country, so this Market's
-    // Region may legitimately have been provisioned first by Thamani B2C
-    // and carry its `thamani_*` tag instead. See findByCountryCode.
+  for (const config of THAMANI_LAUNCH_MARKETS) {
+    // Region is looked up by country, not by the `thamani_*` market-key tag:
+    // Medusa allows only one Region per country, so this Market's Region may
+    // legitimately have been provisioned first by ZuriBeans B2B and carry
+    // its `zuribeans_*` tag instead. See findByCountryCode.
     const region = required(
       findByCountryCode(regions, config.countryCode),
       `Region projection is missing for ${config.marketKey}`,
@@ -68,4 +69,14 @@ export default async function ({ container }: ExecArgs) {
     })
     required(fulfillmentSet, `Shipping context is missing for ${config.marketKey}`)
   }
+
+  // A ZuriBeans B2B Sales Channel, if provisioned, must never satisfy a
+  // Thamani B2C check and vice versa — Digital Estates stay isolated even
+  // though they share a Trade engine instance and Postgres schema.
+  const zuribeansChannel = findByMetadataKey(channels, "baobab_sales_channel_key", "zuribeans_b2b")
+  if (zuribeansChannel && zuribeansChannel.id === thamaniChannel.id) {
+    throw new Error("Thamani B2C and ZuriBeans B2B must not share one Sales Channel")
+  }
+
+  container.resolve("logger").info("Verified Thamani B2C Market projections")
 }
