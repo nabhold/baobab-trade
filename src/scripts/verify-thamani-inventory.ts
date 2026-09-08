@@ -52,11 +52,17 @@ export default async function verifyThamaniInventory({ container }: ExecArgs): P
     throw new Error(
       `Expected ${expectedLevels} Market-eligible levels/projections; found ${levels.length}/${projections.length}`,
     )
-  if (
-    reconciliations.length !== expectedLevels ||
-    reconciliations.some((record) => record.status !== "MATCHED")
-  )
-    throw new Error("Thamani inventory projections are not fully reconciled")
+  if (reconciliations.length !== expectedLevels)
+    throw new Error(
+      `Expected ${expectedLevels} Thamani reconciliation records, found ${reconciliations.length}`,
+    )
+  for (const record of reconciliations) {
+    const expectedDelta = record.medusa_stocked_quantity - record.erp_on_hand_quantity
+    const expectedStatus = expectedDelta === 0 ? "MATCHED" : "VARIANCE"
+    if (record.delta_quantity !== expectedDelta || record.status !== expectedStatus) {
+      throw new Error(`Inconsistent inventory reconciliation ${record.id}`)
+    }
+  }
 
   for (const product of THAMANI_CATALOGUE.filter((entry) => entry.eligibleMarkets.length === 1)) {
     const item = items.find((entry) => entry.sku === product.sku)
