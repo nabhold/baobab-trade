@@ -30,6 +30,7 @@ export default defineConfig({
     { resolve: "./src/modules/fulfilment-bridge" },
     { resolve: "./src/modules/tax-bridge" },
     { resolve: "./src/modules/trade-readiness" },
+    { resolve: "./src/modules/erp-integration" },
   ],
   plugins: [],
 })

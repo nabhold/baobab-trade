@@ -6,6 +6,7 @@ import {
   FULFILMENT_EVENT_TYPES,
   TAX_EVENT_TYPES,
   TRADE_READINESS_EVENT_TYPES,
+  ERP_INTEGRATION_EVENT_TYPES,
   createPlatformTradeEvent,
   createTenantTradeEvent,
   isValidCloudEvent,
@@ -104,6 +105,13 @@ describe("Baobab CloudEvents envelope", () => {
 
   it("uses canonical versioned names for Gate 11 trade-readiness facts", () => {
     for (const type of Object.values(TRADE_READINESS_EVENT_TYPES))
+      expect(isValidCloudEvent(createTenantTradeEvent(tenantContext, { ...baseInput, type }))).toBe(
+        true,
+      )
+  })
+
+  it("uses canonical versioned names for Gate 12 ERP integration facts", () => {
+    for (const type of Object.values(ERP_INTEGRATION_EVENT_TYPES))
       expect(isValidCloudEvent(createTenantTradeEvent(tenantContext, { ...baseInput, type }))).toBe(
         true,
       )
