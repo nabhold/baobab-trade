@@ -102,6 +102,10 @@ keeping native Medusa implementations active. See
 Gate 15 completes B2B isolation and adversarial authorization tests. See
 `docs/security/zuribeans-b2b-threat-model.md`.
 
+Gate 16 adds correlated logs, bounded-cardinality metrics, W3C trace handling,
+operational diagnostics, and dashboard/alert definitions. See
+`docs/operations/observability.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
