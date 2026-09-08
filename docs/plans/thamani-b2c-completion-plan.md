@@ -1,0 +1,35 @@
+# Thamani B2C Implementation Audit and Completion Plan
+
+## Audit baseline
+
+Audit date: 2026-09-08. Baseline: `main` at `85e26cd` (Medusa 2.20.1, Node 24, PostgreSQL 17, Redis-backed production modules).
+
+| Gates | Audit result                                    | Evidence / action                                                                                                            |
+| ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 0–6   | Implemented, but historically bundled in PR #32 | Foundation report, Market/customer/catalogue code and integration checks exist. Preserve; split future work one PR per Gate. |
+| 7     | Implemented; corrective PR #37 merged           | Native Search projection, Market filtering, rebuild and regression evidence.                                                 |
+| 8     | Implemented; corrective PR #38 merged           | Market/currency validation and eligibility now precede price resolution.                                                     |
+| 9     | Implemented; corrective PR #45 merged           | Native workflow hook closes the Store API policy bypass.                                                                     |
+| 10–22 | Outstanding at audit start                      | Complete sequentially under the acceptance plan below.                                                                       |
+
+The audit found no reason to replace Medusa or duplicate native commerce modules. The main recurring risk is a policy wrapper that native Medusa routes can bypass; each remaining Gate must either hook the native workflow or prove the only allowed entry point is enforced server-side.
+
+## Delivery sequence
+
+| Gate                | Deliverable and minimum acceptance evidence                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10 Inventory        | Estate-isolated multi-location stock, eligible-Market projections, real reservation lifecycle, replay-safe ERP projections and variance reconciliation.                      |
+| 11 Payments         | Provider-neutral UG/ZA orchestration, signed/idempotent webhooks, refunds and financial reconciliation; no invented live credentials.                                        |
+| 12 Fulfilment       | Delivery, parcel, pickup, multi-location/partial fulfilment, tracking and returns through provider ports.                                                                    |
+| 13 Tax              | Effective-dated UG/ZA rules, categories, provenance, tax-inclusive retail display policy and reconciliation. Validate current legal reference data before production claims. |
+| 14 Cross-border     | Origin/HS/customs/landed-cost references and fail-closed `TradeCompliancePort`; mark unverified classifications clearly.                                                     |
+| 15 ERP              | Product, supplier, warehouse, order, shipment, payment and return/refund projections with canonical mappings and idempotency.                                                |
+| 16 Events           | Canonical envelopes, transactional outbox, retry/dead-letter, correlation/causation, consumer idempotency and reconciliation.                                                |
+| 17 Store Credit     | Implement only as approved native capability; separate refund, service and promotional reasons with ERP accounting consequence.                                              |
+| 18 Ports            | Contract tests for all seven extraction ports while Medusa adapters remain active.                                                                                           |
+| 19 Security/privacy | Threat model, consumer authorization/isolation, PII minimisation, log/analytics redaction, deletion/anonymisation and abuse controls.                                        |
+| 20 Observability    | Bounded-cardinality metrics, correlated traces/logs, SLOs, alerts and reconciliation jobs for payments, stock, tax, fulfilment and ERP.                                      |
+| 21 CI/CD            | Migration, contract, security, integration, image and production-conformance checks; reproducible release and rollback evidence.                                             |
+| 22 Simulation       | Deterministic UG–ZA pack with 35–40 products, 15–20 synthetic suppliers, 50 consumers, orders, payments, returns/refunds, stock, imports and ERP consequences.               |
+
+For every Gate: branch from current `main`; update code, tests, CI and documentation together; run formatting, lint, type-check, unit tests, build and Gate integration checks; open exactly one Gate PR; review the diff and unresolved threads; require all checks to succeed; squash-merge; then refresh `main` before starting the next Gate. A failed Gate blocks later Gates—commerce has enough ghosts without manufacturing new ones.
