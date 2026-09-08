@@ -101,6 +101,34 @@ catalogue exactly (proving no ZuriBeans product leaked in and nothing is
 missing), that category facets match the governed catalogue composition
 (spec §15), Market isolation, and that a free-text query returns results.
 
+## Eligibility-to-search propagation is not automatic
+
+`bootstrap-thamani-catalogue.ts` recomputes `metadata.thamani_eligible_markets`
+from the `thamani` module's own `MarketProductEligibility` rows on every run
+(not only at product creation), and `bootstrap-thamani-search.ts` reindexes
+from that metadata — so re-running both bootstraps after an eligibility
+change does reach the index correctly. But nothing in this gate makes that
+happen automatically: `src/search/thamani-product-index.ts`'s `consume` only
+fires on `product.*` events, and changing a `MarketProductEligibility` row
+does not emit one. If a live process suspends or withdraws a product's
+eligibility for a Market through any path other than a full catalogue
+bootstrap re-run, the search index keeps serving the old, wider eligibility
+list for that product until an operator or a scheduled job reruns
+`bootstrap:thamani-catalogue` and `bootstrap:thamani-search`.
+
+Closing this gap for real — e.g. a `MarketProductEligibility` update
+publishing its own event the search index also consumes, or the `thamani`
+module writing straight to `product.metadata` and emitting `product.updated`
+itself — is out of scope for Gate 7: no code path in this repository changes
+eligibility away from `ACTIVE` outside of catalogue bootstrap today, so nothing
+currently depends on this propagation being automatic. `npm run
+regression:thamani-eligibility-sync` proves the manual resync path works
+(suspend → rerun both bootstraps → confirm the product drops out of that
+Market's search results → restore), but it is a mutating fixture for a
+disposable database, not a documented health check — see the warning
+docblock at the top of that script before running it anywhere but CI or a
+scratch database.
+
 ## What Gate 7 does not do
 
 Storefront-facing query endpoints, typeahead/autocomplete UI, and search

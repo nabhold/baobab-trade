@@ -1,14 +1,7 @@
-import type {
-  ExecArgs,
-  IProductModuleService,
-  ISearchModuleService,
-} from "@medusajs/framework/types"
+import type { ExecArgs, ISearchModuleService } from "@medusajs/framework/types"
 import { Modules } from "@medusajs/framework/utils"
 import { THAMANI_CATALOGUE, THAMANI_CATEGORY_COUNTS } from "../baobab/thamani/catalogue"
 import { THAMANI_PRODUCT_SEARCH_INDEX } from "../baobab/thamani/search"
-import type ThamaniModuleService from "../modules/thamani/service"
-import bootstrapThamaniCatalogue from "./bootstrap-thamani-catalogue"
-import bootstrapThamaniSearch from "./bootstrap-thamani-search"
 
 export default async function verifyThamaniSearch({ container }: ExecArgs): Promise<void> {
   const searchService = container.resolve<ISearchModuleService>(Modules.SEARCH)
@@ -92,62 +85,11 @@ export default async function verifyThamaniSearch({ container }: ExecArgs): Prom
     throw new Error('Free-text search for "coffee" returned no results')
   }
 
-  await verifyEligibilitySuspensionReachesSearch(container)
-
   container.resolve("logger").info("Verified Gate 7 Thamani B2C search health and Market isolation")
 }
 
-/**
- * Regression scenario for a bug a review caught on Gate 7 (fixed alongside
- * this test): `thamani_eligible_markets` must reflect the `thamani`
- * module's own `MarketProductEligibility` records — the authority for
- * eligibility — not just the static catalogue config a product was
- * originally created from. Suspends a live eligibility record, re-runs the
- * real bootstrap/reindex path (not a reimplementation of it), and confirms
- * the suspended Market disappears from that product's search isolation —
- * then restores it so later CI steps see the catalogue unchanged.
- */
-async function verifyEligibilitySuspensionReachesSearch(
-  container: ExecArgs["container"],
-): Promise<void> {
-  const productService = container.resolve<IProductModuleService>(Modules.PRODUCT)
-  const thamani = container.resolve<ThamaniModuleService>("thamani")
-  const searchService = container.resolve<ISearchModuleService>(Modules.SEARCH)
-
-  const handle = "thamani-uganda-black-tea-250g" // eligible in both Markets; not one of the isolation fixtures above
-  const [product] = await productService.listProducts({ handle })
-  if (!product) throw new Error(`Regression fixture product "${handle}" is missing`)
-
-  const [eligibility] = await thamani.listMarketProductEligibilities({
-    product_id: product.id,
-    market_key: "thamani_za",
-  })
-  if (!eligibility) throw new Error(`"${handle}" has no thamani_za eligibility record to suspend`)
-
-  const rerunFromEligibility = async () => {
-    await bootstrapThamaniCatalogue({ container } as ExecArgs)
-    await bootstrapThamaniSearch({ container } as ExecArgs)
-  }
-
-  try {
-    await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "SUSPENDED" })
-    await rerunFromEligibility()
-
-    const zaAfterSuspension = await searchService.search({
-      entity: THAMANI_PRODUCT_SEARCH_INDEX,
-      fields: ["id", "handle"],
-      filters: { eligible_market_keys: { $overlaps: ["thamani_za"] } },
-      pagination: { take: THAMANI_CATALOGUE.length },
-    })
-    if (zaAfterSuspension.hits.some((hit) => hit.document.handle === handle)) {
-      throw new Error(
-        `"${handle}" still surfaces for thamani_za search after its eligibility was suspended`,
-      )
-    }
-  } finally {
-    // Restore, so subsequent CI steps (and a re-run of this script) see the
-    // catalogue exactly as bootstrap-thamani-catalogue.ts left it.
-    await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "ACTIVE" })
-    await rerunFromEligibility()
-  }
-}
+// This is a read-only health check, safe to run against any environment
+// including production. The eligibility-suspension regression scenario that
+// used to live here now lives in `regression-thamani-eligibility-sync.ts`,
+// which mutates live data and must only run against a disposable database —
+// see that file and `docs/architecture/thamani-search.md` for why.

@@ -40,6 +40,7 @@
     "verify:erp-integration": "medusa exec ./src/scripts/verify-erp-integration.ts",
     "verify:thamani-search": "medusa exec ./src/scripts/verify-thamani-search.ts",
     "verify:thamani-pricing": "medusa exec ./src/scripts/verify-thamani-pricing.ts",
+    "regression:thamani-eligibility-sync": "medusa exec ./src/scripts/regression-thamani-eligibility-sync.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
