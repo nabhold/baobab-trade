@@ -131,6 +131,12 @@ jobs:
       - name: Verify Gate 11 trade-readiness metadata
         run: npm run verify:trade-readiness
 
+      - name: Bootstrap Gate 12 ERP mappings
+        run: npm run bootstrap:erp-integration
+
+      - name: Verify Gate 12 ERP projections and reconciliation
+        run: npm run verify:erp-integration
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

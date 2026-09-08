@@ -84,6 +84,11 @@ cross-border transaction metadata, and a replaceable `TradeCompliancePort`
 with `npm run bootstrap:trade-readiness`. See
 `docs/architecture/zuribeans-trade-readiness.md`.
 
+Gate 12 adds canonical Business Partner, Product, Warehouse, Sales Order,
+Shipment, and financial-consequence mappings plus durable Order/Fulfilment
+projections and ERP reconciliation with `npm run bootstrap:erp-integration`.
+See `docs/architecture/zuribeans-erp-integration.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -99,12 +104,14 @@ with `npm run bootstrap:trade-readiness`. See
 - `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
 - `src/baobab/tax` — contextual tax policy, effective-dated provider, and reconciliation.
 - `src/baobab/trade-readiness` — cross-border metadata and compliance-provider boundary.
+- `src/baobab/erp-integration` — durable ERP projection and reconciliation policy.
 - `src/modules/b2b` — durable B2B Medusa module, models, service, and migrations.
 - `src/modules/inventory-bridge` — ERP projections and canonical location mappings.
 - `src/modules/payment-bridge` — payment policy, status, and reconciliation persistence.
 - `src/modules/fulfilment-bridge` — fulfilment, tracking, and logistics reconciliation persistence.
 - `src/modules/tax-bridge` — tax rules, B2B profiles, determinations, and reconciliation persistence.
 - `src/modules/trade-readiness` — trade lane, decision, and cross-border transaction persistence.
+- `src/modules/erp-integration` — external mappings and ERP integration projections.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.
