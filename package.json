@@ -36,6 +36,7 @@
     "verify:trade-readiness": "medusa exec ./src/scripts/verify-trade-readiness.ts",
     "verify:erp-integration": "medusa exec ./src/scripts/verify-erp-integration.ts",
     "verify:event-outbox": "medusa exec ./src/scripts/verify-event-outbox.ts",
+    "verify:simulation": "medusa exec ./src/scripts/verify-simulation.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
