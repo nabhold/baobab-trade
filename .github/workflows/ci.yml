@@ -189,6 +189,12 @@ jobs:
       - name: Verify Thamani Gate 10 availability, reservations, isolation, and ERP reconciliation
         run: npm run verify:thamani-inventory
 
+      - name: Bootstrap Thamani Gate 11 regional payment policies
+        run: npm run bootstrap:thamani-payments
+
+      - name: Verify Thamani Gate 11 payment, webhook, refund, and ERP reconciliation
+        run: npm run verify:thamani-payments
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
