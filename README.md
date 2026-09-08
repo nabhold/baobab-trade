@@ -184,6 +184,12 @@ commercial and credential approval. Run `npm run bootstrap:thamani-payments`
 and `npm run verify:thamani-payments`; see
 `docs/architecture/thamani-payments.md`.
 
+Gate 12 adds local delivery, parcel and pickup policies, multi-location line
+allocation, tracking evidence, bounded returns, and execution reconciliation.
+Run `npm run bootstrap:thamani-fulfilment` and
+`npm run verify:thamani-fulfilment`; see
+`docs/architecture/thamani-fulfilment.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
