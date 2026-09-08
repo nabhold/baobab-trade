@@ -3,6 +3,7 @@ import type {
   ExecArgs,
   IPricingModuleService,
   IProductModuleService,
+  RemoteQueryFunction,
 } from "@medusajs/framework/types"
 import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import {
@@ -10,8 +11,14 @@ import {
   salePriceListKey,
   THAMANI_SALES,
 } from "../baobab/thamani/pricing/sale-config"
-import { toThamaniPricingDecision } from "../baobab/thamani/pricing/decision-port"
+import {
+  ThamaniMarketCurrencyMismatchError,
+  ThamaniProductNotEligibleForMarketError,
+  toThamaniPricingDecision,
+} from "../baobab/thamani/pricing/decision-port"
+import { MedusaThamaniPricingDecisionPort } from "../baobab/thamani/pricing/medusa-adapter"
 import { findByMetadataKey } from "../baobab/market/mapping"
+import type ThamaniModuleService from "../modules/thamani/service"
 
 export default async function verifyThamaniPricing({ container }: ExecArgs): Promise<void> {
   const productService = container.resolve<IProductModuleService>(Modules.PRODUCT)
@@ -73,5 +80,68 @@ export default async function verifyThamaniPricing({ container }: ExecArgs): Pro
     }
   }
 
+  await verifyPricingDecisionPortFailsClosed(container, productService)
+
   container.resolve("logger").info("Verified Gate 8 Thamani B2C sale pricing and effective dating")
+}
+
+/**
+ * Regression for a review finding on the merged Gate 8 PR: the pricing
+ * decision port must not resolve a price for a Market/currency the launch
+ * config does not authorize, and must not resolve a price for a Market the
+ * variant's product is not eligible for — even though Gate 6 gives every
+ * variant, including the deliberately single-Market fixtures, both a UGX
+ * and a ZAR price. Both failures must be closed (throw), not silently
+ * return an unauthorized price.
+ */
+async function verifyPricingDecisionPortFailsClosed(
+  container: ExecArgs["container"],
+  productService: IProductModuleService,
+): Promise<void> {
+  const query = container.resolve<RemoteQueryFunction>(ContainerRegistrationKeys.QUERY)
+  const thamani = container.resolve<ThamaniModuleService>("thamani")
+  const port = new MedusaThamaniPricingDecisionPort(query, thamani)
+
+  const [ugOnlyProduct] = await productService.listProducts(
+    { handle: "thamani-reusable-cotton-tote-bag" },
+    { relations: ["variants"] },
+  )
+  const ugOnlyVariant = ugOnlyProduct?.variants?.[0]
+  if (!ugOnlyVariant) throw new Error("thamani-reusable-cotton-tote-bag is missing its variant")
+
+  // Uganda only permits UGX — this SKU also carries a ZAR price (Gate 6
+  // gives every variant both currencies), so nothing but this guard stops
+  // an unauthorized thamani_ug/ZAR price from resolving.
+  try {
+    await port.decide({ variantId: ugOnlyVariant.id, marketKey: "thamani_ug", currencyCode: "zar" })
+    throw new Error(
+      "Expected a Market/currency mismatch (thamani_ug requested in zar) to fail closed",
+    )
+  } catch (error) {
+    if (!(error instanceof ThamaniMarketCurrencyMismatchError)) throw error
+  }
+
+  // This SKU is Uganda-only (no thamani_za eligibility record). ZAR is a
+  // currency South Africa does authorize, so only the eligibility check —
+  // not the currency check — can catch this.
+  try {
+    await port.decide({ variantId: ugOnlyVariant.id, marketKey: "thamani_za", currencyCode: "zar" })
+    throw new Error(
+      "Expected a Uganda-only product requested for thamani_za to fail closed on eligibility",
+    )
+  } catch (error) {
+    if (!(error instanceof ThamaniProductNotEligibleForMarketError)) throw error
+  }
+
+  // The authorized combination must still resolve normally.
+  const decision = await port.decide({
+    variantId: ugOnlyVariant.id,
+    marketKey: "thamani_ug",
+    currencyCode: "ugx",
+  })
+  if (decision.amount !== 15_000) {
+    throw new Error(
+      `Expected thamani-reusable-cotton-tote-bag to resolve 15000 UGX, got ${decision.amount}`,
+    )
+  }
 }

@@ -14,6 +14,8 @@
  * product independent UGX/ZAR amounts, so Market-specific pricing is the
  * `currencyCode` selection itself, not an overlay on top of it.
  */
+import { getThamaniMarketBootstrapConfig } from "../../market/thamani-market-config"
+
 export type ThamaniPricingKind = "STANDARD_RETAIL" | "SALE"
 
 export type ThamaniPricingDecisionRequest = {
@@ -45,6 +47,50 @@ export class ThamaniPricingUnavailableError extends Error {
   ) {
     super(`No retail price is available for variant ${variantId} in ${currencyCode}`)
     this.name = "ThamaniPricingUnavailableError"
+  }
+}
+
+/**
+ * A Market's `allowedCurrencies` is a launch-configuration fact (Uganda:
+ * UGX only; South Africa: ZAR only — see `thamani-market-config.ts`), not
+ * merely a display preference: Gate 6 gives every variant independent
+ * UGX/ZAR prices, including single-Market SKUs, so nothing else stops a
+ * caller from combining a Market with a currency it does not authorize.
+ */
+export class ThamaniMarketCurrencyMismatchError extends Error {
+  constructor(
+    readonly marketKey: string,
+    readonly currencyCode: string,
+    readonly allowedCurrencies: readonly string[],
+  ) {
+    super(
+      `Market "${marketKey}" does not permit currency "${currencyCode}" — allowed: ${allowedCurrencies.join(", ")}`,
+    )
+    this.name = "ThamaniMarketCurrencyMismatchError"
+  }
+}
+
+/** Fails closed (spec §36 Market isolation) rather than resolving a price for a Market the variant's product is not eligible for. */
+export class ThamaniProductNotEligibleForMarketError extends Error {
+  constructor(
+    readonly variantId: string,
+    readonly marketKey: string,
+  ) {
+    super(`Variant ${variantId} has no ACTIVE Market eligibility for "${marketKey}"`)
+    this.name = "ThamaniProductNotEligibleForMarketError"
+  }
+}
+
+/**
+ * Pure precondition check a pricing adapter must run before resolving any
+ * price: `currencyCode` must be one the requested `marketKey` actually
+ * permits. Deliberately case-insensitive — Medusa currency codes on prices
+ * are lower-case (`"ugx"`), while `allowedCurrencies` is upper-case.
+ */
+export function assertCurrencyAllowedForMarket(marketKey: string, currencyCode: string): void {
+  const { allowedCurrencies } = getThamaniMarketBootstrapConfig(marketKey)
+  if (!allowedCurrencies.includes(currencyCode.toUpperCase())) {
+    throw new ThamaniMarketCurrencyMismatchError(marketKey, currencyCode, allowedCurrencies)
   }
 }
 
