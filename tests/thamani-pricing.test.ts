@@ -7,6 +7,8 @@ import {
   THAMANI_SALE_WINDOW_KINDS,
 } from "../src/baobab/thamani/pricing/sale-config"
 import {
+  assertCurrencyAllowedForMarket,
+  ThamaniMarketCurrencyMismatchError,
   ThamaniPricingUnavailableError,
   toThamaniPricingDecision,
   type ThamaniPricingDecisionRequest,
@@ -124,5 +126,29 @@ describe("toThamaniPricingDecision", () => {
         currency_code: null,
       }),
     ).toThrow(ThamaniPricingUnavailableError)
+  })
+})
+
+describe("assertCurrencyAllowedForMarket", () => {
+  it("allows Uganda's own currency in either case", () => {
+    expect(() => assertCurrencyAllowedForMarket("thamani_ug", "ugx")).not.toThrow()
+    expect(() => assertCurrencyAllowedForMarket("thamani_ug", "UGX")).not.toThrow()
+  })
+
+  it("allows South Africa's own currency", () => {
+    expect(() => assertCurrencyAllowedForMarket("thamani_za", "zar")).not.toThrow()
+  })
+
+  it("fails closed when a Market/currency combination is not authorized — the launch bug this guards", () => {
+    expect(() => assertCurrencyAllowedForMarket("thamani_ug", "zar")).toThrow(
+      ThamaniMarketCurrencyMismatchError,
+    )
+    expect(() => assertCurrencyAllowedForMarket("thamani_za", "ugx")).toThrow(
+      ThamaniMarketCurrencyMismatchError,
+    )
+  })
+
+  it("fails closed for an unknown Market key", () => {
+    expect(() => assertCurrencyAllowedForMarket("thamani_ke", "ugx")).toThrow()
   })
 })
