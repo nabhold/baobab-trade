@@ -155,15 +155,19 @@ relative to _now_) and `npm run verify:thamani-pricing` to check effective
 dating resolves correctly. See `docs/architecture/thamani-pricing.md`.
 
 Gate 9 adds percentage/code-based Promotions using Medusa's native
-Promotion module, plus Baobab's own Market/currency-scope and
-exclusive-stacking policy checks in front of it (`applyThamaniPromotion`) —
-neither is enforced by Medusa itself. Run `npm run bootstrap:thamani-promotions`
-to provision the two demonstration codes and `npm run verify:thamani-promotions`
-to check their configuration. `npm run regression:thamani-promotion-application`
-is a separate, disposable-database-only fixture proving a discount actually
-computes correctly against a Cart and that a second code is rejected — it
-mutates data (including a Gate-10-independent stock level for its two demo
-variants) and is deliberately not part of the read-only health check. See
+Promotion module, plus Baobab's own Digital-Estate-scope, Market/currency-
+scope, and exclusive-stacking policy checks — none enforced by Medusa
+itself — via a `validate` hook (`src/workflows/thamani-promotion-guard.ts`)
+registered directly on `updateCartPromotionsWorkflow`, so it applies to
+every caller including Medusa's own Store API route, not just a wrapper
+function. Run `npm run bootstrap:thamani-promotions` to provision the two
+demonstration codes and `npm run verify:thamani-promotions` to check their
+configuration. `npm run regression:thamani-promotion-application` is a
+separate, disposable-database-only fixture proving a discount actually
+computes correctly against a Cart, that a second code is rejected, and that
+a ZuriBeans cart cannot redeem a Thamani code — it mutates data (including a
+Gate-10-independent stock level for its two demo variants) and is
+deliberately not part of the read-only health check. See
 `docs/architecture/thamani-promotions.md`.
 
 ## Repository layout
@@ -195,6 +199,7 @@ variants) and is deliberately not part of the read-only health check. See
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning (shared provisioning logic in `src/baobab/market/provisioning.ts`).
 - `src/scripts/bootstrap-thamani-market.ts` / `bootstrap-thamani-catalogue.ts` / `bootstrap-thamani-search.ts` / `bootstrap-thamani-pricing.ts` — Thamani B2C provisioning.
 - `src/search/thamani-product-index.ts` — the `thamani_product` Search Module index definition.
+- `src/workflows/thamani-promotion-guard.ts` — a `validate` hook on Medusa's `updateCartPromotionsWorkflow` enforcing Thamani's Digital-Estate, Market/currency, and stacking policies for every caller.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.
 
