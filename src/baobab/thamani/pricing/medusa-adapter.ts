@@ -3,6 +3,7 @@ import type { RemoteQueryFunction } from "@medusajs/framework/types"
 import type ThamaniModuleService from "../../../modules/thamani/service"
 import {
   assertCurrencyAllowedForMarket,
+  ThamaniPricingUnavailableError,
   ThamaniProductNotEligibleForMarketError,
   toThamaniPricingDecision,
   type ThamaniPricingDecision,
@@ -33,18 +34,48 @@ export class MedusaThamaniPricingDecisionPort implements ThamaniPricingDecisionP
     // — or a product — it does not authorize (spec §36 Market isolation).
     assertCurrencyAllowedForMarket(request.marketKey, request.currencyCode)
 
+    // Identity only, no `calculated_price` field: ADR-0012 PRC-COM-016
+    // requires eligibility to be checked *before* price optimisation, not
+    // merely before the caller sees the result. Asking Medusa to resolve
+    // `calculated_price` in the same query would compute it for every
+    // request, including an ineligible one.
+    const { data: identityData } = await this.query.graph({
+      entity: "variants",
+      fields: ["id", "product_id"],
+      filters: { id: [request.variantId] },
+    })
+    const variant = identityData[0] as { product_id?: string | null } | undefined
+
+    if (!variant) {
+      throw new ThamaniPricingUnavailableError(request.variantId, request.currencyCode)
+    }
+    // A returned variant with no product is not exempt from the eligibility
+    // check — it cannot possess an ACTIVE Market eligibility either, so it
+    // fails closed the same as an explicitly ineligible product.
+    if (!variant.product_id) {
+      throw new ThamaniProductNotEligibleForMarketError(request.variantId, request.marketKey)
+    }
+
+    const eligibility = await this.thamani.listMarketProductEligibilities({
+      product_id: variant.product_id,
+      market_key: request.marketKey,
+    })
+    const isEligible = eligibility.some((record) => record.status === "ACTIVE")
+    if (!isEligible) {
+      throw new ThamaniProductNotEligibleForMarketError(request.variantId, request.marketKey)
+    }
+
     const { data } = await this.query.graph({
       entity: "variants",
-      fields: ["id", "product_id", "calculated_price.*"],
+      fields: ["id", "calculated_price.*"],
       filters: { id: [request.variantId] },
       context: {
         calculated_price: QueryContext({ currency_code: request.currencyCode }),
       },
     })
 
-    const variant = data[0] as
+    const priced = data[0] as
       | {
-          product_id?: string | null
           calculated_price?: {
             calculated_amount: number | null
             original_amount: number | null
@@ -57,20 +88,9 @@ export class MedusaThamaniPricingDecisionPort implements ThamaniPricingDecisionP
         }
       | undefined
 
-    if (variant?.product_id) {
-      const eligibility = await this.thamani.listMarketProductEligibilities({
-        product_id: variant.product_id,
-        market_key: request.marketKey,
-      })
-      const isEligible = eligibility.some((record) => record.status === "ACTIVE")
-      if (!isEligible) {
-        throw new ThamaniProductNotEligibleForMarketError(request.variantId, request.marketKey)
-      }
-    }
-
     return toThamaniPricingDecision(
       request,
-      variant?.calculated_price ?? {
+      priced?.calculated_price ?? {
         calculated_amount: null,
         original_amount: null,
         currency_code: null,

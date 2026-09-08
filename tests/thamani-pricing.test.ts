@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   isSaleActive,
   resolveSaleWindow,
@@ -10,9 +10,11 @@ import {
   assertCurrencyAllowedForMarket,
   ThamaniMarketCurrencyMismatchError,
   ThamaniPricingUnavailableError,
+  ThamaniProductNotEligibleForMarketError,
   toThamaniPricingDecision,
   type ThamaniPricingDecisionRequest,
 } from "../src/baobab/thamani/pricing/decision-port"
+import { MedusaThamaniPricingDecisionPort } from "../src/baobab/thamani/pricing/medusa-adapter"
 
 const FIXED_NOW = new Date("2026-09-08T00:00:00.000Z")
 
@@ -150,5 +152,101 @@ describe("assertCurrencyAllowedForMarket", () => {
 
   it("fails closed for an unknown Market key", () => {
     expect(() => assertCurrencyAllowedForMarket("thamani_ke", "ugx")).toThrow()
+  })
+})
+
+/** A minimal RemoteQueryFunction double — only `.graph` is ever called. */
+function fakeQuery(...responses: readonly { data: unknown[] }[]) {
+  const graph = vi.fn()
+  for (const response of responses) graph.mockResolvedValueOnce(response)
+  return { graph } as unknown as ConstructorParameters<typeof MedusaThamaniPricingDecisionPort>[0]
+}
+
+function fakeThamani(eligibility: readonly { status: string }[]) {
+  return {
+    listMarketProductEligibilities: vi.fn().mockResolvedValue(eligibility),
+  } as unknown as ConstructorParameters<typeof MedusaThamaniPricingDecisionPort>[1]
+}
+
+describe("MedusaThamaniPricingDecisionPort", () => {
+  const request: ThamaniPricingDecisionRequest = {
+    variantId: "variant_1",
+    marketKey: "thamani_ug",
+    currencyCode: "ugx",
+  }
+
+  it("fails closed on a Market/currency mismatch without querying anything", async () => {
+    const query = fakeQuery()
+    const thamani = fakeThamani([])
+    const port = new MedusaThamaniPricingDecisionPort(query, thamani)
+
+    await expect(port.decide({ ...request, currencyCode: "zar" })).rejects.toThrow(
+      ThamaniMarketCurrencyMismatchError,
+    )
+    expect(query.graph).not.toHaveBeenCalled()
+    expect(thamani.listMarketProductEligibilities).not.toHaveBeenCalled()
+  })
+
+  it("fails closed with ThamaniPricingUnavailableError when the variant does not exist", async () => {
+    const query = fakeQuery({ data: [] })
+    const thamani = fakeThamani([])
+    const port = new MedusaThamaniPricingDecisionPort(query, thamani)
+
+    await expect(port.decide(request)).rejects.toThrow(ThamaniPricingUnavailableError)
+    expect(thamani.listMarketProductEligibilities).not.toHaveBeenCalled()
+  })
+
+  it("fails closed with ThamaniProductNotEligibleForMarketError for a variant with no product — never exempt", async () => {
+    const query = fakeQuery({ data: [{ id: "variant_1", product_id: null }] })
+    const thamani = fakeThamani([])
+    const port = new MedusaThamaniPricingDecisionPort(query, thamani)
+
+    await expect(port.decide(request)).rejects.toThrow(ThamaniProductNotEligibleForMarketError)
+    expect(thamani.listMarketProductEligibilities).not.toHaveBeenCalled()
+    // Never reaches a second, price-resolving query.
+    expect(query.graph).toHaveBeenCalledTimes(1)
+  })
+
+  it("checks eligibility before ever resolving calculated_price (ADR-0012 PRC-COM-016 ordering)", async () => {
+    const query = fakeQuery({ data: [{ id: "variant_1", product_id: "prod_1" }] })
+    const thamani = fakeThamani([{ status: "SUSPENDED" }])
+    const port = new MedusaThamaniPricingDecisionPort(query, thamani)
+
+    await expect(port.decide(request)).rejects.toThrow(ThamaniProductNotEligibleForMarketError)
+    // Only the identity query ran; calculated_price was never requested.
+    expect(query.graph).toHaveBeenCalledTimes(1)
+    expect(query.graph).toHaveBeenCalledWith(
+      expect.objectContaining({ fields: ["id", "product_id"] }),
+    )
+  })
+
+  it("resolves a price only after confirming ACTIVE eligibility", async () => {
+    const query = fakeQuery(
+      { data: [{ id: "variant_1", product_id: "prod_1" }] },
+      {
+        data: [
+          {
+            calculated_price: {
+              calculated_amount: 15_000,
+              original_amount: 15_000,
+              currency_code: "ugx",
+              calculated_price: null,
+            },
+          },
+        ],
+      },
+    )
+    const thamani = fakeThamani([{ status: "ACTIVE" }])
+    const port = new MedusaThamaniPricingDecisionPort(query, thamani)
+
+    const decision = await port.decide(request)
+
+    expect(decision.kind).toBe("STANDARD_RETAIL")
+    expect(decision.amount).toBe(15_000)
+    expect(query.graph).toHaveBeenCalledTimes(2)
+    expect(thamani.listMarketProductEligibilities).toHaveBeenCalledWith({
+      product_id: "prod_1",
+      market_key: "thamani_ug",
+    })
   })
 })
