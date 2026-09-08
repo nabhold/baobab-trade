@@ -163,6 +163,27 @@ export const TAX_EVENT_TYPES = {
   profileVerified: "com.nabhold.commerce.tax-profile.verified.v1",
 } as const
 
+export const TRADE_READINESS_EVENT_TYPES = {
+  classificationAssigned: "com.nabhold.trade.classification.assigned.v1",
+  complianceDecided: "com.nabhold.trade.compliance.decided.v1",
+  crossBorderCreated: "com.nabhold.trade.cross-border-order.created.v1",
+} as const
+
+export type TradeReadinessEventPayload = {
+  transaction_reference: string
+  order_reference: string
+  market_key: string
+  legal_seller_key: string
+  origin_country: string
+  destination_country: string
+  incoterm: string
+  hs_classification_references: string[]
+  trade_uoms: string[]
+  customs_procedure_reference: string
+  compliance_decision_reference: string
+  compliance_status: "APPROVED" | "REJECTED" | "REVIEW_REQUIRED"
+}
+
 export type TaxEventPayload = {
   determination_reference: string
   organisation_id: string

@@ -1,0 +1,26 @@
+import type { ExecArgs } from "@medusajs/framework/types"
+import { ZURIBEANS_TRADE_LANES } from "../baobab/trade-readiness"
+import type TradeReadinessModuleService from "../modules/trade-readiness/service"
+export default async function ({ container }: ExecArgs) {
+  const service = container.resolve<TradeReadinessModuleService>("tradeReadiness")
+  for (const lane of ZURIBEANS_TRADE_LANES) {
+    const [existing] = await service.listTradeLanePolicies({
+      policy_reference: lane.policyReference,
+      policy_version: lane.policyVersion,
+    })
+    if (!existing)
+      await service.createTradeLanePolicies({
+        policy_reference: lane.policyReference,
+        policy_version: lane.policyVersion,
+        origin_country: lane.originCountry,
+        destination_country: lane.destinationCountry,
+        permitted_incoterms: lane.permittedIncoterms,
+        permitted_trade_uoms: lane.permittedTradeUoms,
+        effective_from: lane.effectiveFrom,
+        effective_until: lane.effectiveUntil,
+        source: lane.source,
+        status: "ACTIVE",
+      })
+  }
+  container.resolve("logger").info("Bootstrapped Gate 11 Uganda-South Africa trade lanes")
+}
