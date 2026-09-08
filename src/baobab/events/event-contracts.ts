@@ -169,6 +169,22 @@ export const TRADE_READINESS_EVENT_TYPES = {
   crossBorderCreated: "com.nabhold.trade.cross-border-order.created.v1",
 } as const
 
+export const ERP_INTEGRATION_EVENT_TYPES = {
+  orderProjectionRequested: "com.nabhold.commerce.erp-order.projection-requested.v1",
+  fulfilmentProjectionRequested: "com.nabhold.commerce.erp-fulfilment.projection-requested.v1",
+  financialStatusProjected: "com.nabhold.commerce.erp-financial-status.projected.v1",
+  reconciliationRequired: "com.nabhold.commerce.erp-integration.reconciliation-required.v1",
+} as const
+
+export type ErpIntegrationEventPayload = {
+  canonical_entity_id: string
+  commerce_reference: string
+  erp_external_reference?: string
+  projection_kind: "ORDER" | "FULFILMENT" | "FINANCIAL_STATUS"
+  projection_status: string
+  source_sequence?: number
+}
+
 export type TradeReadinessEventPayload = {
   transaction_reference: string
   order_reference: string
