@@ -177,6 +177,13 @@ replay-safe ERP projection/reconciliation records. Run
 `npm run verify:thamani-inventory`; see
 `docs/architecture/thamani-inventory.md`.
 
+Gate 11 adds prepaid UGX/ZAR consumer payment policies, provider-neutral
+orchestration, signed replay-resistant webhook receipts, idempotent refunds,
+and ERP reconciliation. Regional live adapters remain disabled pending
+commercial and credential approval. Run `npm run bootstrap:thamani-payments`
+and `npm run verify:thamani-payments`; see
+`docs/architecture/thamani-payments.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.

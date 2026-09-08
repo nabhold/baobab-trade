@@ -13,7 +13,8 @@ export type PaymentStatus =
 export type InitiatePaymentCommand = {
   paymentReference: string
   orderReference: string
-  organisationId: string
+  organisationId?: string
+  customerReference?: string
   marketKey: string
   legalSellerKey: string
   method: PaymentMethod
@@ -73,6 +74,9 @@ export class MedusaPaymentOrchestrationAdapter implements PaymentOrchestrationPo
   async initiate(command: InitiatePaymentCommand): Promise<PaymentSnapshot> {
     if (!Number.isSafeInteger(command.amountMinor) || command.amountMinor <= 0) {
       throw new Error("Payment amount must be a positive integer in minor units")
+    }
+    if (Boolean(command.organisationId) === Boolean(command.customerReference)) {
+      throw new Error("Payment requires exactly one B2B organisation or B2C customer reference")
     }
     if (command.terms !== "PREPAID" && command.method !== "INVOICE_TERMS") {
       throw new Error("Commercial invoice terms require the INVOICE_TERMS method")
