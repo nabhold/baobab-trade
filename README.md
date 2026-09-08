@@ -93,14 +93,14 @@ See `docs/architecture/zuribeans-erp-integration.md`.
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
 engine instance — a strict B2C retailer with many independent suppliers, not
-a marketplace and not a second ZuriBeans storefront. Gates 0-7 (Discovery
-through Search) are implemented; promotions, full inventory, regional
-payments, fulfilment providers, tax provider integration, cross-border trade
-readiness, ERP integration, events, Store Credit, and the simulation dataset
-remain planned. See `docs/architecture/thamani-b2c-foundation.md` for Gates
-0-6, including the two Medusa store-wide constraints (one Region per
-country, globally unique Fulfillment Service Zone names) that shape how the
-two estates share this engine.
+a marketplace and not a second ZuriBeans storefront. Gates 0-8 (Discovery
+through Retail Pricing) are implemented; promotions, full inventory,
+regional payments, fulfilment providers, tax provider integration,
+cross-border trade readiness, ERP integration, events, Store Credit, and the
+simulation dataset remain planned. See `docs/architecture/thamani-b2c-foundation.md`
+for Gates 0-6, including the two Medusa store-wide constraints (one Region
+per country, globally unique Fulfillment Service Zone names) that shape how
+the two estates share this engine.
 
 Run `npm run bootstrap:thamani-market` to provision the `thamani_ug`/
 `thamani_za` Markets (their own `thamani_b2c` Sales Channel and Stock
@@ -118,6 +118,14 @@ built-in Postgres provider — no external search service required yet. Run
 and `npm run verify:thamani-search` to check its health and Market
 isolation. See `docs/architecture/thamani-search.md`.
 
+Gate 8 adds scheduled sale pricing on top of Gate 6's standard UGX/ZAR
+prices, plus the `ThamaniPricingDecisionPort` a future checkout calls
+instead of reading Medusa Pricing directly. Run
+`npm run bootstrap:thamani-pricing` to provision the three demonstration
+sale Price Lists (one active, one upcoming, one expired, windows computed
+relative to _now_) and `npm run verify:thamani-pricing` to check effective
+dating resolves correctly. See `docs/architecture/thamani-pricing.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -131,7 +139,7 @@ isolation. See `docs/architecture/thamani-search.md`.
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
 - `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
-- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, and search-projection definitions.
+- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, and pricing-decision definitions.
 - `src/baobab/tax` — contextual tax policy, effective-dated provider, and reconciliation.
 - `src/baobab/trade-readiness` — cross-border metadata and compliance-provider boundary.
 - `src/baobab/erp-integration` — durable ERP projection and reconciliation policy.
@@ -144,7 +152,7 @@ isolation. See `docs/architecture/thamani-search.md`.
 - `src/modules/trade-readiness` — trade lane, decision, and cross-border transaction persistence.
 - `src/modules/erp-integration` — external mappings and ERP integration projections.
 - `src/scripts/bootstrap-market.ts` — idempotent per-Market Medusa provisioning (shared provisioning logic in `src/baobab/market/provisioning.ts`).
-- `src/scripts/bootstrap-thamani-market.ts` / `bootstrap-thamani-catalogue.ts` / `bootstrap-thamani-search.ts` — Thamani B2C provisioning.
+- `src/scripts/bootstrap-thamani-market.ts` / `bootstrap-thamani-catalogue.ts` / `bootstrap-thamani-search.ts` / `bootstrap-thamani-pricing.ts` — Thamani B2C provisioning.
 - `src/search/thamani-product-index.ts` — the `thamani_product` Search Module index definition.
 - `runtime` — infrastructure-facing runtime requirements.
 - `docs` — architecture and decisions.
