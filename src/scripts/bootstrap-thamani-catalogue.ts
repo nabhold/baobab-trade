@@ -16,6 +16,25 @@ import { THAMANI_SUPPLIERS } from "../baobab/thamani/suppliers"
 import { findByMetadataKey } from "../baobab/market/mapping"
 import type ThamaniModuleService from "../modules/thamani/service"
 
+/**
+ * The subset of catalogue configuration the `thamani_product` search index
+ * (Gate 7) reads back off the product's native `metadata` rather than
+ * joining to the `thamani` module's own tables — see
+ * `src/baobab/thamani/search/projection.ts`.
+ */
+function searchProjectionMetadata(config: ThamaniProductConfig): Record<string, unknown> {
+  return {
+    baobab_canonical_product_key: config.canonicalKey,
+    baobab_catalogue: "thamani_b2c",
+    thamani_category: config.category,
+    thamani_brand: config.brand,
+    thamani_country_of_origin: config.countryOfOrigin,
+    thamani_supplier_key: config.supplierKey,
+    thamani_consumer_uom: config.consumerUom,
+    thamani_eligible_markets: [...config.eligibleMarkets],
+  }
+}
+
 const CATEGORY_TITLES: Record<ThamaniProductCategory, string> = {
   COFFEE_TEA: "Coffee & Tea",
   CHOCOLATE_CONFECTIONERY: "Chocolate & Confectionery",
@@ -172,11 +191,7 @@ export default async function bootstrapThamaniCatalogue({ container }: ExecArgs)
                   })),
                 },
               ],
-              metadata: {
-                baobab_canonical_product_key: config.canonicalKey,
-                baobab_catalogue: "thamani_b2c",
-                thamani_category: config.category,
-              },
+              metadata: searchProjectionMetadata(config),
             },
           ],
         },
@@ -188,6 +203,14 @@ export default async function bootstrapThamaniCatalogue({ container }: ExecArgs)
     const variant = product.variants?.[0]
     if (!variant) throw new Error(`Product ${config.handle} has no retail variant`)
     await ensureRetailProjection(thamani, product.id, supplierIdByKey, config)
+
+    // Keep the Gate 7 search-projection metadata in sync with this config on
+    // every run, not just at creation: search reads from `metadata`, never
+    // from the `thamani` module's own tables, so a later catalogue change
+    // (e.g. widening a product's eligible Markets) must reach it here too.
+    await productService.updateProducts(product.id, {
+      metadata: { ...product.metadata, ...searchProjectionMetadata(config) },
+    })
   }
 
   logger.info(
