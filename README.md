@@ -106,6 +106,9 @@ Gate 16 adds correlated logs, bounded-cardinality metrics, W3C trace handling,
 operational diagnostics, and dashboard/alert definitions. See
 `docs/operations/observability.md`.
 
+Gate 17 adds machine-readable production controls and automated release
+conformance gates. See `docs/operations/ci-cd.md`.
+
 ## Thamani B2C
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
