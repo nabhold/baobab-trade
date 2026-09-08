@@ -44,6 +44,7 @@
     "test:contract": "vitest run tests/tenant-context.test.ts tests/canonical-mapping-contract.test.ts tests/control-plane-client.test.ts",
     "test:isolation": "vitest run tests/commerce-context.test.ts",
     "test:security": "vitest run tests/b2b-policy.test.ts tests/b2b-threat-model.test.ts tests/event-contracts.test.ts",
+    "test:conformance": "vitest run tests/production-conformance.test.ts",
     "test:watch": "vitest",
     "verify:core-modules": "medusa exec ./src/scripts/verify-core-modules.ts",
     "verify:infrastructure": "medusa exec ./src/scripts/verify-infrastructure.ts"

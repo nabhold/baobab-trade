@@ -1,0 +1,28 @@
+name: Release Readiness
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install reproducible dependencies
+        run: npm ci
+      - name: Run production conformance tests
+        run: npm run test:conformance
+      - name: Build release candidate
+        run: npm run build
