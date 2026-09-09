@@ -14,6 +14,7 @@ describe("Thamani Gate 15 ERP contract", () => {
       "SHIPMENT",
       "PAYMENT",
       "RETURN_REFUND",
+      "CREDIT_LINE",
     ])
   })
   it("derives a stable versioned idempotency key", () => {

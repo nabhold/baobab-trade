@@ -231,6 +231,9 @@ jobs:
       - name: Verify Thamani Gate 16 transactional events and legal-entity isolation
         run: npm run verify:thamani-events
 
+      - name: Regression Thamani Gate 17 store credit issuance
+        run: npm run regression:thamani-store-credit-issuance
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

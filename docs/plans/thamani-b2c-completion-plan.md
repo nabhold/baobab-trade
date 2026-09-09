@@ -17,7 +17,8 @@ Audit date: 2026-09-08. Baseline: `main` at `85e26cd` (Medusa 2.20.1, Node 24, P
 | 14    | Implemented in PR #51                           | Origin/HS/customs/landed-cost projections and fail-closed compliance review.                                                               |
 | 15    | Implemented in this Gate                        | Canonical ERP mappings plus seven replay-safe projection families and collision rejection.                                                 |
 | 16    | Implemented in this Gate                        | Seven legally scoped canonical event facts, database-atomic projection/outbox persistence, retry/dead-letter, receipts and reconciliation. |
-| 17–22 | Outstanding after Gate 16                       | Complete sequentially under the acceptance plan below.                                                                                     |
+| 17    | Implemented in this Gate                        | Store Credit as native Order Credit Lines with REFUND/SERVICE/PROMOTIONAL reasons and derived ERP financial consequence.                   |
+| 18–22 | Outstanding after Gate 17                       | Complete sequentially under the acceptance plan below.                                                                                     |
 
 The audit found no reason to replace Medusa or duplicate native commerce modules. The main recurring risk is a policy wrapper that native Medusa routes can bypass; each remaining Gate must either hook the native workflow or prove the only allowed entry point is enforced server-side.
 

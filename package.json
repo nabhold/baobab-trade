@@ -62,6 +62,7 @@
     "regression:thamani-eligibility-sync": "medusa exec ./src/scripts/regression-thamani-eligibility-sync.ts",
     "regression:thamani-tax-provider-wiring": "medusa exec ./src/scripts/regression-thamani-tax-provider-wiring.ts",
     "regression:thamani-promotion-application": "medusa exec ./src/scripts/regression-thamani-promotion-application.ts",
+    "regression:thamani-store-credit-issuance": "medusa exec ./src/scripts/regression-thamani-store-credit-issuance.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

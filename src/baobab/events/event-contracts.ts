@@ -185,6 +185,7 @@ export const THAMANI_EVENT_TYPES = {
   paymentProjectionRequested: "com.nabhold.commerce.thamani-payment.projection-requested.v1",
   returnRefundProjectionRequested:
     "com.nabhold.commerce.thamani-return-refund.projection-requested.v1",
+  creditLineProjectionRequested: "com.nabhold.commerce.thamani-credit-line.projection-requested.v1",
   reconciliationRequired: "com.nabhold.commerce.thamani.reconciliation-required.v1",
 } as const
 
@@ -196,6 +197,7 @@ export type ThamaniProjectionKind =
   | "SHIPMENT"
   | "PAYMENT"
   | "RETURN_REFUND"
+  | "CREDIT_LINE"
 
 export type ThamaniProjectionEventPayload = {
   owner_legal_entity_id: "canonical:legal-entity:thamani"
