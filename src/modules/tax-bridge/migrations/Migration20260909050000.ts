@@ -15,6 +15,11 @@ export class Migration20260909050000 extends Migration {
     this.addSql(
       'alter table "tax_determination" add column if not exists "gross_amount_minor" bigint not null default 0;',
     )
+    this.addSql(`update "tax_determination" set
+      "net_amount_minor" = "taxable_basis_minor",
+      "gross_amount_minor" = "taxable_basis_minor" + "tax_amount_minor";`)
+    this.addSql('alter table "tax_determination" alter column "net_amount_minor" drop default;')
+    this.addSql('alter table "tax_determination" alter column "gross_amount_minor" drop default;')
     this
       .addSql(`alter table "tax_determination" add constraint "tax_determination_one_subject" check (
       ("organisation_id" is not null and "customer_reference" is null) or
