@@ -29,8 +29,19 @@ export interface TradeCompliancePort {
 export interface TradeLanePolicyProvider {
   listPolicies(originCountry: string, destinationCountry: string): Promise<TradeLanePolicy[]>
 }
+export interface TradeProfileVerificationProvider {
+  isVerified(input: {
+    canonicalProductKey: string
+    marketKey: string
+    hsClassificationReference: string
+    effectiveAt: Date
+  }): Promise<boolean>
+}
 export class ProjectedTradeComplianceAdapter implements TradeCompliancePort {
-  constructor(private readonly policies: TradeLanePolicyProvider) {}
+  constructor(
+    private readonly policies: TradeLanePolicyProvider,
+    private readonly profiles: TradeProfileVerificationProvider,
+  ) {}
   async evaluate(
     transaction: CrossBorderTransactionMetadata,
     effectiveAt: Date,
@@ -55,6 +66,17 @@ export class ProjectedTradeComplianceAdapter implements TradeCompliancePort {
       reasons.push("INCOTERM_REVIEW_REQUIRED")
     if (transaction.lines.some((line) => !policy.permittedTradeUoms.includes(line.tradeUom)))
       reasons.push("TRADE_UOM_REVIEW_REQUIRED")
+    const verified = await Promise.all(
+      transaction.lines.map((line) =>
+        this.profiles.isVerified({
+          canonicalProductKey: line.canonicalProductKey,
+          marketKey: transaction.marketKey,
+          hsClassificationReference: line.hsClassificationReference,
+          effectiveAt,
+        }),
+      ),
+    )
+    if (verified.some((value) => !value)) reasons.push("HS_CLASSIFICATION_UNVERIFIED")
     return {
       decisionReference: `${transaction.transactionReference}:${policy.policyVersion}`,
       status: reasons.length ? "REVIEW_REQUIRED" : "APPROVED",

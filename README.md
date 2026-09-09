@@ -119,7 +119,7 @@ see `docs/simulation/zuribeans-ug-za.md`.
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
 engine instance — a strict B2C retailer with many independent suppliers, not
 a marketplace and not a second ZuriBeans storefront. Gates 0-13 (Discovery
-through Tax) are implemented; cross-border trade readiness, ERP integration,
+through Cross-border Trade Readiness) are implemented; ERP integration,
 events, Store Credit, and the simulation dataset remain planned. See
 `docs/architecture/thamani-b2c-foundation.md`
 for Gates 0-6, including the two Medusa store-wide constraints (one Region
@@ -195,6 +195,14 @@ B2C determination ownership, provenance and ERP reconciliation. Run
 `npm run bootstrap:thamani-tax` and `npm run verify:thamani-tax`; see
 `docs/architecture/thamani-tax.md`. Protected zero-rated and exempt categories
 remain review-required until their precise statutory classification is verified.
+
+Gate 14 projects origin, HS, customs-tariff and landed-cost references for
+every eligible product/Market pair and extends the `TradeCompliancePort` for
+retail units. Catalogue classifications remain explicitly unverified and route
+imports to review until customs authority evidence is recorded. Run
+`npm run bootstrap:thamani-trade-readiness` and
+`npm run verify:thamani-trade-readiness`; see
+`docs/architecture/thamani-trade-readiness.md`.
 
 ## Repository layout
 
