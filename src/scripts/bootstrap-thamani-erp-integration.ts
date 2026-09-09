@@ -1,10 +1,12 @@
 import type { ExecArgs } from "@medusajs/framework/types"
+import { THAMANI_DIGITAL_ESTATE_CANONICAL_ID } from "../baobab/context/digital-estates"
 import { THAMANI_INVENTORY_LOCATIONS } from "../baobab/thamani/inventory"
 import type ErpIntegrationModuleService from "../modules/erp-integration/service"
 import type InventoryBridgeModuleService from "../modules/inventory-bridge/service"
 import type ThamaniModuleService from "../modules/thamani/service"
 
 type MappingInput = {
+  digital_estate: string
   mapping_type: "PRODUCT" | "SUPPLIER" | "WAREHOUSE"
   canonical_entity_id: string
   medusa_entity_type: string
@@ -23,6 +25,7 @@ export default async function ({ container }: ExecArgs) {
   const createMapping = async (input: MappingInput) => {
     const [existing] = await erp.listErpEntityMappings({
       mapping_type: input.mapping_type,
+      digital_estate: input.digital_estate,
       canonical_entity_id: input.canonical_entity_id,
     })
     if (!existing) await erp.createErpEntityMappings(input)
@@ -30,6 +33,7 @@ export default async function ({ container }: ExecArgs) {
   const products = await thamani.listProductRetailProfiles({})
   for (const product of products)
     await createMapping({
+      digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
       mapping_type: "PRODUCT",
       canonical_entity_id: product.canonical_product_key,
       medusa_entity_type: "product",
@@ -43,6 +47,7 @@ export default async function ({ container }: ExecArgs) {
   const suppliers = await thamani.listSuppliers({})
   for (const supplier of suppliers)
     await createMapping({
+      digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
       mapping_type: "SUPPLIER",
       canonical_entity_id: supplier.supplier_key,
       medusa_entity_type: "thamani_supplier",
@@ -61,6 +66,7 @@ export default async function ({ container }: ExecArgs) {
   )
   for (const warehouse of warehouses)
     await createMapping({
+      digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
       mapping_type: "WAREHOUSE",
       canonical_entity_id: warehouse.canonical_location_key,
       medusa_entity_type: "stock_location",

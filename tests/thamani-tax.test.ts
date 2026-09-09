@@ -64,6 +64,15 @@ describe("Thamani Gate 13 tax", () => {
       })
     },
   )
+  it("rejects a B2B-shaped request even when jurisdiction and classification match a Thamani rule", async () => {
+    await expect(
+      new EffectiveDatedTaxProviderAdapter(provider).determine({
+        ...request("UG", 118_000),
+        customerReference: undefined,
+        organisationId: "zuribeans-org",
+      }),
+    ).rejects.toThrow("No effective tax rule")
+  })
   it("requires exactly one B2C or B2B tax subject", async () => {
     await expect(
       new EffectiveDatedTaxProviderAdapter(provider).determine({

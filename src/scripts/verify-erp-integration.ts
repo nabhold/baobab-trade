@@ -1,4 +1,5 @@
 import type { ExecArgs } from "@medusajs/framework/types"
+import { ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID } from "../baobab/context/digital-estates"
 import {
   DurableErpIntegrationAdapter,
   assertFinancialProjection,
@@ -9,7 +10,9 @@ import {
 import type ErpIntegrationModuleService from "../modules/erp-integration/service"
 export default async function ({ container }: ExecArgs) {
   const erp = container.resolve<ErpIntegrationModuleService>("erpIntegration")
-  const mappings = await erp.listErpEntityMappings({})
+  const mappings = await erp.listErpEntityMappings({
+    digital_estate: ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
+  })
   if (
     mappings.filter((item) => item.mapping_type === "PRODUCT").length !== 10 ||
     mappings.filter((item) => item.mapping_type === "WAREHOUSE").length !== 6 ||

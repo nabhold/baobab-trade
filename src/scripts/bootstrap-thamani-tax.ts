@@ -30,11 +30,13 @@ export default async function ({ container }: ExecArgs) {
   }
   for (const rule of THAMANI_STANDARD_TAX_RULES) {
     const [existing] = await bridge.listTaxRuleProjections({
+      digital_estate: rule.digitalEstate,
       rule_reference: rule.ruleReference,
       rule_version: rule.ruleVersion,
     })
     if (!existing)
       await bridge.createTaxRuleProjections({
+        digital_estate: rule.digitalEstate,
         rule_reference: rule.ruleReference,
         rule_version: rule.ruleVersion,
         jurisdiction_key: rule.jurisdictionKey,

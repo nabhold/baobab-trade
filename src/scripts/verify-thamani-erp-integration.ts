@@ -1,4 +1,5 @@
 import type { ExecArgs } from "@medusajs/framework/types"
+import { THAMANI_DIGITAL_ESTATE_CANONICAL_ID } from "../baobab/context/digital-estates"
 import {
   DurableErpIntegrationAdapter,
   erpProjectionDigest,
@@ -12,17 +13,15 @@ import type ErpIntegrationModuleService from "../modules/erp-integration/service
 
 export default async function ({ container }: ExecArgs) {
   const erp = container.resolve<ErpIntegrationModuleService>("erpIntegration")
-  const mappings = await erp.listErpEntityMappings({})
+  const mappings = await erp.listErpEntityMappings({
+    digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+  })
   for (const [kind, expected] of [
     ["PRODUCT", 38],
     ["SUPPLIER", 17],
     ["WAREHOUSE", 5],
   ] as const)
-    if (
-      mappings.filter(
-        (item) => item.mapping_type === kind && item.external_reference.includes(":thamani:"),
-      ).length !== expected
-    )
+    if (mappings.filter((item) => item.mapping_type === kind).length !== expected)
       throw new Error(`Expected ${expected} Thamani ${kind} mappings`)
 
   const adapter = new DurableErpIntegrationAdapter({

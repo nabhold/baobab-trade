@@ -4,6 +4,7 @@ const CommercePayment = model.define(
   { name: "commerce_payment", tableName: "commerce_payment" },
   {
     id: model.id({ prefix: "pay" }).primaryKey(),
+    digital_estate: model.text(),
     payment_reference: model.text().unique(),
     order_reference: model.text().index(),
     organisation_id: model.text().index().nullable(),

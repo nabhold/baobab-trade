@@ -9,6 +9,7 @@ import type {
 type Stored = Awaited<ReturnType<FulfilmentBridgeModuleService["listCommerceFulfilments"]>>[number]
 const snapshot = (record: Stored): FulfilmentSnapshot => ({
   id: record.id,
+  digitalEstate: record.digital_estate,
   fulfilmentReference: record.fulfilment_reference,
   orderReference: record.order_reference,
   organisationId: record.organisation_id ?? undefined,
@@ -35,9 +36,10 @@ export class FulfilmentBridgeRecordAdapter implements FulfilmentRecordRepository
     const [record] = await this.bridge.listCommerceFulfilments({ source_idempotency_key: key })
     return record ? snapshot(record) : undefined
   }
-  async create(command: RequestFulfilmentCommand) {
+  async create(command: RequestFulfilmentCommand & { digitalEstate: string }) {
     return snapshot(
       await this.bridge.createCommerceFulfilments({
+        digital_estate: command.digitalEstate,
         fulfilment_reference: command.fulfilmentReference,
         order_reference: command.orderReference,
         organisation_id: command.organisationId,

@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest"
 import {
+  THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+  ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
+} from "../src/baobab/context/digital-estates"
+import { THAMANI_TRADE_LANES } from "../src/baobab/thamani/trade-readiness"
+import {
   ProjectedTradeComplianceAdapter,
   ZURIBEANS_TRADE_LANES,
   type CrossBorderTransactionMetadata,
 } from "../src/baobab/trade-readiness"
 const transaction: CrossBorderTransactionMetadata = {
+  digitalEstate: ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
   transactionReference: "tx",
   orderReference: "ord",
   marketKey: "zuribeans_ug",
@@ -81,5 +87,48 @@ describe("TradeCompliancePort", () => {
         new Date("2026-09-09"),
       ),
     ).rejects.toThrow(/No effective/)
+  })
+  it("never matches a lane policy belonging to the other Digital Estate, even for the same origin/destination and effective-dating", async () => {
+    const crossEstatePort = new ProjectedTradeComplianceAdapter(
+      {
+        async listPolicies(origin, destination) {
+          // Only Thamani's own lanes are returned, but the transaction below is ZuriBeans'.
+          return THAMANI_TRADE_LANES.filter(
+            (lane) => lane.originCountry === origin && lane.destinationCountry === destination,
+          ).map((lane) => ({
+            ...lane,
+            permittedIncoterms: [...lane.permittedIncoterms],
+            permittedTradeUoms: [...lane.permittedTradeUoms],
+          }))
+        },
+      },
+      {
+        async isVerified() {
+          return true
+        },
+      },
+    )
+    await expect(crossEstatePort.evaluate(transaction, new Date("2026-09-09"))).rejects.toThrow(
+      /No effective/,
+    )
+  })
+  it("rejects a request with no Digital Estate", async () => {
+    await expect(
+      port.evaluate({ ...transaction, digitalEstate: "" }, new Date("2026-09-09")),
+    ).rejects.toThrow(/incomplete/)
+  })
+})
+
+describe("Thamani's own trade lanes", () => {
+  it("carry the Thamani Digital Estate tag and never coincide with ZuriBeans' policy references", () => {
+    expect(
+      THAMANI_TRADE_LANES.every(
+        (lane) => lane.digitalEstate === THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+      ),
+    ).toBe(true)
+    const zuriBeansReferences = new Set(ZURIBEANS_TRADE_LANES.map((lane) => lane.policyReference))
+    expect(
+      THAMANI_TRADE_LANES.every((lane) => !zuriBeansReferences.has(lane.policyReference)),
+    ).toBe(true)
   })
 })

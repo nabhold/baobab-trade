@@ -10,6 +10,7 @@ export type ComplianceDecision = {
   source: string
 }
 export type TradeLanePolicy = {
+  digitalEstate: string
   policyReference: string
   policyVersion: string
   originCountry: string
@@ -51,6 +52,10 @@ export class ProjectedTradeComplianceAdapter implements TradeCompliancePort {
       await this.policies.listPolicies(transaction.originCountry, transaction.destinationCountry)
     ).filter(
       (policy) =>
+        // ZuriBeans and Thamani can share an origin/destination country pair — a lane policy
+        // belonging to the other Digital Estate must never satisfy this transaction, even when
+        // countries and effective-dating otherwise line up.
+        policy.digitalEstate === transaction.digitalEstate &&
         policy.effectiveFrom <= effectiveAt &&
         (!policy.effectiveUntil || effectiveAt < policy.effectiveUntil),
     )

@@ -4,6 +4,7 @@ const ErpEntityMapping = model
     { name: "erp_entity_mapping", tableName: "erp_entity_mapping" },
     {
       id: model.id({ prefix: "erpmap" }).primaryKey(),
+      digital_estate: model.text(),
       mapping_type: model.enum([
         "BUSINESS_PARTNER",
         "PRODUCT",
@@ -26,7 +27,7 @@ const ErpEntityMapping = model
     },
   )
   .indexes([
-    { on: ["mapping_type", "canonical_entity_id"], unique: true },
+    { on: ["mapping_type", "digital_estate", "canonical_entity_id"], unique: true },
     { on: ["erp_entity_type", "erp_native_id"], unique: true },
   ])
 export default ErpEntityMapping

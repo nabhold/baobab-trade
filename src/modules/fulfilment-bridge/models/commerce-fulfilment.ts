@@ -3,6 +3,7 @@ const CommerceFulfilment = model.define(
   { name: "commerce_fulfilment", tableName: "commerce_fulfilment" },
   {
     id: model.id({ prefix: "ful" }).primaryKey(),
+    digital_estate: model.text(),
     fulfilment_reference: model.text().unique(),
     order_reference: model.text().index(),
     organisation_id: model.text().index().nullable(),
