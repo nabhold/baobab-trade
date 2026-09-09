@@ -14,8 +14,11 @@
  *
  * No external production provider has been approved for either Market.
  * Payment, tax, and shipping therefore bind Medusa's built-in providers
- * explicitly. Do not invent provider credentials, tax rates, or shipping
- * prices here.
+ * explicitly. Do not invent provider credentials or tax rates here. The one
+ * deliberate exception is `shipping.shippingOption.amount`: Medusa cannot
+ * complete a checkout without a real, priced `ShippingOption` on the
+ * service zone, and the bound `manual_manual` provider has no
+ * calculated-pricing fallback — see the field's own doc comment below.
  */
 export type ProviderMode = "NATIVE" | "EXTERNAL" | "DISABLED"
 
@@ -41,6 +44,21 @@ export type MarketBootstrapConfig = {
     providerIds: readonly string[]
     fulfillmentSet: { key: string; name: string; type: "shipping" }
     serviceZone: { key: string; name: string; countryCode: string }
+    /**
+     * A cart cannot complete checkout (`completeCartWorkflow`'s
+     * `validate-shipping` step) without a real `ShippingOption` on the
+     * service zone above, and `manual_manual` (this Market's only bound
+     * shipping provider) has no calculated-pricing support — Medusa requires
+     * a `price_type: "flat"` option to carry an actual amount, there is no
+     * zero-config fallback the way tax has (0% when no rate row exists). So
+     * `amount` is a placeholder, not a sourced rate: it exists only to
+     * unblock checkout mechanically, the same way `stockLocation.addressLine`
+     * above is a placeholder address, not a real warehouse. Do not treat it
+     * as an approved shipping price. Same major-currency-unit scale as
+     * `RetailPrice.standardAmount` (catalogue-config.ts) — e.g. `2_000` means
+     * UGX 2,000, not 2,000 minor units.
+     */
+    shippingOption: { key: string; name: string; amount: number }
   }
   tax: {
     mode: ProviderMode
@@ -111,6 +129,11 @@ export const ZURIBEANS_UGANDA: MarketBootstrapConfig = {
       name: "Uganda Domestic",
       countryCode: "UG",
     },
+    shippingOption: {
+      key: "zuribeans_ug_standard_shipping",
+      name: "ZuriBeans Uganda Standard Shipping (development placeholder rate)",
+      amount: 5_000,
+    },
   },
   tax: {
     mode: "NATIVE",
@@ -147,6 +170,11 @@ export const ZURIBEANS_SOUTH_AFRICA: MarketBootstrapConfig = {
       key: "zuribeans_za_domestic",
       name: "South Africa Domestic",
       countryCode: "ZA",
+    },
+    shippingOption: {
+      key: "zuribeans_za_standard_shipping",
+      name: "ZuriBeans South Africa Standard Shipping (development placeholder rate)",
+      amount: 50,
     },
   },
   tax: {

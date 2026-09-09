@@ -1,6 +1,7 @@
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import {
   createRegionsWorkflow,
+  createShippingOptionsWorkflow,
   linkSalesChannelsToStockLocationWorkflow,
   updateRegionsWorkflow,
 } from "@medusajs/core-flows"
@@ -296,7 +297,7 @@ export async function bootstrapMarket(
   }
 
   // Shipping context: a location-bound fulfillment set and a country service
-  // zone. Shipping options/rates are a later provider decision.
+  // zone.
   let [fulfillmentSet] = await fulfillmentService.listFulfillmentSets({
     name: config.shipping.fulfillmentSet.name,
   })
@@ -338,6 +339,62 @@ export async function bootstrapMarket(
       })),
     )
     log("bound stock location to Sales Channel and fulfillment providers")
+  }
+
+  // Shipping option: `completeCartWorkflow` cannot succeed without a real,
+  // priced option on the service zone above — see the doc comment on
+  // `MarketBootstrapConfig.shipping.shippingOption` for why this can't be a
+  // sourced rate yet. Idempotent by service zone (not by name: every Market's
+  // service zone is already guaranteed unique by construction above, whereas
+  // a name collision between Markets would otherwise make this a no-op for
+  // every Market but the first). Must run after the stock-location-to-
+  // fulfillment-provider binding above: Medusa's own
+  // `createShippingOptionsWorkflow` validates the option's provider is
+  // already enabled for the option's service location, so creating it any
+  // earlier fails with "Providers (...) are not enabled for the service
+  // location".
+  const [serviceZone] = await fulfillmentService.listServiceZones({
+    name: config.shipping.serviceZone.name,
+  })
+  if (!serviceZone)
+    throw new Error(`Service zone "${config.shipping.serviceZone.name}" was not provisioned`)
+  const [existingShippingOption] = await fulfillmentService.listShippingOptions({
+    service_zone: { id: serviceZone.id },
+  })
+  if (!existingShippingOption) {
+    // Medusa seeds one "default"-type Shipping Profile at migration time,
+    // shared across every Digital Estate — the same one the catalogue
+    // bootstrap scripts look up. Fall back to creating it only if that
+    // seeding ever doesn't happen (e.g. a future Medusa version, or a
+    // database this fix runs against before that seeding occurred).
+    let [shippingProfile] = await fulfillmentService.listShippingProfiles({ type: "default" })
+    if (!shippingProfile) {
+      shippingProfile = await fulfillmentService.createShippingProfiles({
+        name: "Default Shipping Profile",
+        type: "default",
+      })
+    }
+    const currencyCode = toMedusaCurrencyCode(config.defaultCurrency)
+    const { result: createdShippingOptions } = await createShippingOptionsWorkflow(container).run({
+      input: [
+        {
+          name: config.shipping.shippingOption.name,
+          service_zone_id: serviceZone.id,
+          shipping_profile_id: shippingProfile.id,
+          provider_id: config.shipping.providerIds[0],
+          type: {
+            label: "Standard",
+            description: "Standard shipping",
+            code: "standard",
+          },
+          price_type: "flat",
+          prices: [{ amount: config.shipping.shippingOption.amount, currency_code: currencyCode }],
+        },
+      ],
+    })
+    log("created shipping option", { shippingOptionId: createdShippingOptions[0].id })
+  } else {
+    log("shipping option already provisioned", { shippingOptionId: existingShippingOption.id })
   }
 
   log("market provider bindings configured", {

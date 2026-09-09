@@ -15,7 +15,9 @@
  * `canonical_key`s pending Control Plane registration, and no external
  * production provider has been approved for either Market: payment and
  * shipping bind Medusa's built-in providers explicitly. Do not invent
- * provider credentials or shipping prices here.
+ * provider credentials here. `shipping.shippingOption.amount` is a
+ * deliberate exception — see `market-config.ts`'s own doc comment on that
+ * field for why a placeholder amount is unavoidable.
  *
  * Tax is the one exception: `tp_thamani_effective_dated` (Gate 13,
  * `src/modules/thamani-tax-provider/`) wraps Baobab's own sourced,
@@ -62,6 +64,11 @@ export const THAMANI_UGANDA: MarketBootstrapConfig = {
       name: "Thamani Uganda Domestic",
       countryCode: "UG",
     },
+    shippingOption: {
+      key: "thamani_ug_standard_shipping",
+      name: "Thamani Uganda Standard Shipping (development placeholder rate)",
+      amount: 5_000,
+    },
   },
   tax: {
     mode: "NATIVE",
@@ -98,6 +105,11 @@ export const THAMANI_SOUTH_AFRICA: MarketBootstrapConfig = {
       key: "thamani_za_domestic",
       name: "Thamani South Africa Domestic",
       countryCode: "ZA",
+    },
+    shippingOption: {
+      key: "thamani_za_standard_shipping",
+      name: "Thamani South Africa Standard Shipping (development placeholder rate)",
+      amount: 50,
     },
   },
   tax: {
