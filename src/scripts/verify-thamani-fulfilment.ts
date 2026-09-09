@@ -1,7 +1,11 @@
-import type { ExecArgs } from "@medusajs/framework/types"
+import type { ExecArgs, ILockingModule } from "@medusajs/framework/types"
+import { Modules } from "@medusajs/framework/utils"
 import {
   FulfilmentBridgeRecordAdapter,
   MedusaFulfilmentAdapter,
+  createIdempotentCommerceReturn,
+  createIdempotentFulfilmentAllocations,
+  createIdempotentFulfilmentOrderLine,
   reconcileFulfilment,
   resolveFulfilmentProvider,
 } from "../baobab/fulfilment"
@@ -14,6 +18,7 @@ import type FulfilmentBridgeModuleService from "../modules/fulfilment-bridge/ser
 
 export default async function ({ container }: ExecArgs) {
   const bridge = container.resolve<FulfilmentBridgeModuleService>("fulfilmentBridge")
+  const locking = container.resolve<ILockingModule>(Modules.LOCKING)
   const policies = await bridge.listFulfilmentPolicyBindings({
     market_key: THAMANI_FULFILMENT_POLICIES.map((policy) => policy.marketKey),
   })
@@ -22,7 +27,7 @@ export default async function ({ container }: ExecArgs) {
   const ug = THAMANI_FULFILMENT_POLICIES.find((policy) => policy.marketKey === "thamani_ug")
   if (!ug) throw new Error("Thamani Uganda fulfilment policy missing")
   const provider = resolveFulfilmentProvider(ug, "PARCEL_SHIPMENT")
-  const port = new MedusaFulfilmentAdapter(new FulfilmentBridgeRecordAdapter(bridge))
+  const port = new MedusaFulfilmentAdapter(new FulfilmentBridgeRecordAdapter(bridge, locking))
   let fulfilment = await port.request({
     fulfilmentReference: "thamani-gate12-parcel-ug",
     orderReference: "thamani-gate12-order-ug",
@@ -46,30 +51,16 @@ export default async function ({ container }: ExecArgs) {
     { orderLineReference: "line-1", sourceLocationKey: "TH-UG-EBB-01", quantity: 1 },
   ] as const
   assertCompleteAllocation({ "line-1": 2 }, allocations)
-  const [existingLine] = await bridge.listFulfilmentOrderLines({
-    fulfilment_id: fulfilment.id,
-    order_line_reference: "line-1",
+  await createIdempotentFulfilmentOrderLine(bridge, locking, {
+    fulfilmentId: fulfilment.id,
+    orderLineReference: "line-1",
+    fulfilledQuantity: 2,
   })
-  if (!existingLine)
-    await bridge.createFulfilmentOrderLines({
-      fulfilment_id: fulfilment.id,
-      order_line_reference: "line-1",
-      fulfilled_quantity: 2,
-    })
-  const existingAllocations = await bridge.listFulfilmentAllocations({
-    fulfilment_id: fulfilment.id,
-    order_line_reference: "line-1",
+  await createIdempotentFulfilmentAllocations(bridge, locking, {
+    fulfilmentId: fulfilment.id,
+    orderLineReference: "line-1",
+    allocations,
   })
-  if (!existingAllocations.length)
-    await bridge.createFulfilmentAllocations(
-      allocations.map((allocation, index) => ({
-        fulfilment_id: fulfilment.id,
-        order_line_reference: allocation.orderLineReference,
-        source_location_key: allocation.sourceLocationKey,
-        quantity: allocation.quantity,
-        source_idempotency_key: `thamani:gate12:allocation:${index}`,
-      })),
-    )
   for (const [from, to] of [
     ["REQUESTED", "ACCEPTED"],
     ["ACCEPTED", "ALLOCATED"],
@@ -92,22 +83,18 @@ export default async function ({ container }: ExecArgs) {
     alreadyReturnedQuantity: 0,
     reason: "DAMAGED",
   })
-  const [existingReturn] = await bridge.listCommerceReturns({
-    source_idempotency_key: "thamani:gate12:return:1",
+  await createIdempotentCommerceReturn(bridge, locking, {
+    returnReference: "thamani-gate12-return-1",
+    fulfilmentId: fulfilment.id,
+    orderReference: fulfilment.orderReference,
+    orderLineReference: "line-1",
+    quantity: 1,
+    reason: "DAMAGED",
+    disposition: "QUARANTINE",
+    status: "AUTHORIZED",
+    idempotencyKey: "thamani:gate12:return:1",
+    correlationId: fulfilment.correlationId,
   })
-  if (!existingReturn)
-    await bridge.createCommerceReturns({
-      return_reference: "thamani-gate12-return-1",
-      fulfilment_id: fulfilment.id,
-      order_reference: fulfilment.orderReference,
-      order_line_reference: "line-1",
-      quantity: 1,
-      reason: "DAMAGED",
-      disposition: "QUARANTINE",
-      status: "AUTHORIZED",
-      source_idempotency_key: "thamani:gate12:return:1",
-      correlation_id: fulfilment.correlationId,
-    })
   const result = reconcileFulfilment({
     commerceStatus: fulfilment.status,
     executionStatus: "DISPATCHED",
