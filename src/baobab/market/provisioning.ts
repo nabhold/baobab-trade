@@ -3,6 +3,7 @@ import { linkSalesChannelsToStockLocationWorkflow } from "@medusajs/core-flows"
 import type {
   ExecArgs,
   IFulfillmentModuleService,
+  IPricingModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
   IStockLocationService,
@@ -49,6 +50,7 @@ export async function bootstrapMarket(
   const storeService = container.resolve<IStoreModuleService>(Modules.STORE)
   const fulfillmentService = container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT)
   const taxService = container.resolve<ITaxModuleService>(Modules.TAX)
+  const pricingService = container.resolve<IPricingModuleService>(Modules.PRICING)
   const remoteLink = container.resolve(ContainerRegistrationKeys.LINK) as {
     create(links: Record<string, Record<string, string>>[]): Promise<unknown>
   }
@@ -158,8 +160,55 @@ export async function bootstrapMarket(
       },
     })
     log("created tax region without hardcoded rates", { taxRegionId: created.id })
+  } else if (taxRegion.provider_id !== config.tax.providerId) {
+    // Medusa enforces at most one Tax Region per country store-wide (like
+    // Region above), so a country another Digital Estate provisioned first
+    // is reused rather than recreated — but `provider_id` is a single value
+    // on that shared row, and this config's own declared provider was
+    // previously silently ignored whenever the Region already existed. Keep
+    // it in sync so a Market's own provider choice actually takes effect,
+    // not just at first-ever creation.
+    // Because this row is shared, whichever Digital Estate's bootstrap runs
+    // LAST for a given country determines the provider both estates get
+    // until the next bootstrap. ZuriBeans' `bootstrap:market` always runs
+    // before Thamani's `bootstrap:thamani-market` (see ci.yml) precisely so
+    // Thamani's provider is the one left in place.
+    await taxService.updateTaxRegions({ id: taxRegion.id, provider_id: config.tax.providerId })
+    log("updated tax region provider to match this Market's configuration", {
+      taxRegionId: taxRegion.id,
+      providerId: config.tax.providerId,
+    })
   } else {
     log("tax region already provisioned", { taxRegionId: taxRegion.id })
+  }
+
+  // Tax-inclusive pricing: only set when a Market actually declares it.
+  // Medusa's own `isTaxInclusive` resolution (pricing-module.js) only honours
+  // a `region_id`-scoped PricePreference when the price itself *also* carries
+  // a matching `region_id` price rule — neither Thamani's nor ZuriBeans'
+  // catalogue prices do (they're plain per-currency prices), so a
+  // Region-scoped preference would silently never apply. `currency_code` is
+  // the one scope that actually takes effect for prices shaped this way.
+  // Without this, a real (non-zero) tax rate silently inflates every total
+  // beyond the advertised, tax-inclusive sticker price.
+  //
+  // `allowedCurrencies` is shared with any sibling estate using the same
+  // currency, like `provider_id` above — but that estate's own tax stays
+  // unseeded (0%) today, so this is a real behaviour change for Thamani and
+  // a no-op for it numerically. It is still only ever set to `true`: a
+  // Market declaring `false` (net pricing) leaves Medusa's tax-exclusive
+  // default untouched rather than writing a row that could fight a sibling
+  // estate over the same shared currency.
+  if (config.tax.pricesIncludeTax) {
+    for (const currency of config.allowedCurrencies) {
+      const currencyCode = toMedusaCurrencyCode(currency)
+      await pricingService.upsertPricePreferences({
+        attribute: "currency_code",
+        value: currencyCode,
+        is_tax_inclusive: true,
+      })
+      log("set currency prices to tax-inclusive", { currencyCode })
+    }
   }
 
   // Shipping context: a location-bound fulfillment set and a country service
