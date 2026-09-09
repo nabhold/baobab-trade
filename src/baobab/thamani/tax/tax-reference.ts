@@ -1,9 +1,11 @@
+import { THAMANI_DIGITAL_ESTATE_CANONICAL_ID } from "../../context/digital-estates"
 import type { EffectiveTaxRule } from "../../tax"
 
 export const THAMANI_TAX_SOURCE_RETRIEVED_AT = new Date("2026-09-09T00:00:00Z")
 
 export const THAMANI_STANDARD_TAX_RULES: readonly EffectiveTaxRule[] = [
   {
+    digitalEstate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
     ruleReference: "thamani:ug:vat:standard",
     ruleVersion: "2026-09-09",
     jurisdictionKey: "UG",
@@ -16,6 +18,7 @@ export const THAMANI_STANDARD_TAX_RULES: readonly EffectiveTaxRule[] = [
     sourceRetrievedAt: THAMANI_TAX_SOURCE_RETRIEVED_AT,
   },
   {
+    digitalEstate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
     ruleReference: "thamani:za:vat:standard",
     ruleVersion: "2026-09-09",
     jurisdictionKey: "ZA",

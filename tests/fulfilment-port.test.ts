@@ -33,7 +33,7 @@ class MemoryRecords implements FulfilmentRecordRepository {
   async findByIdempotencyKey(key: string) {
     return this.record?.idempotencyKey === key ? this.record : undefined
   }
-  async create(input: RequestFulfilmentCommand) {
+  async create(input: RequestFulfilmentCommand & { digitalEstate: string }) {
     return (this.record = { ...input, id: "ful_1", status: "REQUESTED" })
   }
   async transition(
@@ -59,5 +59,18 @@ describe("FulfilmentPort", () => {
     await expect(
       port.request({ ...command, shipment: { ...command.shipment, hsReferences: [] } }),
     ).rejects.toThrow(/incomplete/)
+  })
+  it("derives estate:zuribeans-b2b for an organisationId command and estate:thamani-b2c for a customerReference command", async () => {
+    const port = new MedusaFulfilmentAdapter(new MemoryRecords())
+    const zuriBeansFulfilment = await port.request(command)
+    expect(zuriBeansFulfilment.digitalEstate).toBe("estate:zuribeans-b2b")
+    const thamaniPort = new MedusaFulfilmentAdapter(new MemoryRecords())
+    const thamaniFulfilment = await thamaniPort.request({
+      ...command,
+      organisationId: undefined,
+      customerReference: "customer-1",
+      idempotencyKey: "request-2",
+    })
+    expect(thamaniFulfilment.digitalEstate).toBe("estate:thamani-b2c")
   })
 })

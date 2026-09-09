@@ -10,6 +10,7 @@ type StoredPayment = Awaited<ReturnType<PaymentBridgeModuleService["listCommerce
 
 const snapshot = (payment: StoredPayment): PaymentSnapshot => ({
   id: payment.id,
+  digitalEstate: payment.digital_estate,
   paymentReference: payment.payment_reference,
   orderReference: payment.order_reference,
   organisationId: payment.organisation_id ?? undefined,
@@ -37,9 +38,12 @@ export class PaymentBridgeRecordAdapter implements PaymentRecordRepository {
     return payment ? snapshot(payment) : undefined
   }
 
-  async create(command: InitiatePaymentCommand): Promise<PaymentSnapshot> {
+  async create(
+    command: InitiatePaymentCommand & { digitalEstate: string },
+  ): Promise<PaymentSnapshot> {
     return snapshot(
       await this.bridge.createCommercePayments({
+        digital_estate: command.digitalEstate,
         payment_reference: command.paymentReference,
         order_reference: command.orderReference,
         organisation_id: command.organisationId,

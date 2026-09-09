@@ -1,3 +1,7 @@
+import {
+  THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+  ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
+} from "../context/digital-estates"
 import type { PaymentMethod, PaymentTerms } from "./payment-config"
 
 export type PaymentStatus =
@@ -29,6 +33,7 @@ export type InitiatePaymentCommand = {
 
 export type PaymentSnapshot = InitiatePaymentCommand & {
   id: string
+  digitalEstate: string
   status: PaymentStatus
   providerReference?: string | null
   providerStatus?: string | null
@@ -36,7 +41,7 @@ export type PaymentSnapshot = InitiatePaymentCommand & {
 
 export interface PaymentRecordRepository {
   findByIdempotencyKey(key: string): Promise<PaymentSnapshot | undefined>
-  create(command: InitiatePaymentCommand): Promise<PaymentSnapshot>
+  create(command: InitiatePaymentCommand & { digitalEstate: string }): Promise<PaymentSnapshot>
   transition(
     paymentId: string,
     from: PaymentStatus,
@@ -82,7 +87,14 @@ export class MedusaPaymentOrchestrationAdapter implements PaymentOrchestrationPo
       throw new Error("Commercial invoice terms require the INVOICE_TERMS method")
     }
     const existing = await this.records.findByIdempotencyKey(command.idempotencyKey)
-    return existing ?? this.records.create(command)
+    if (existing) return existing
+    // organisationId/customerReference exclusivity is already enforced above — this is the same
+    // trusted, explicit derivation tax and trade-readiness use, never inferred from Market or
+    // currency (ZuriBeans and Thamani can share both per country).
+    const digitalEstate = command.organisationId
+      ? ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID
+      : THAMANI_DIGITAL_ESTATE_CANONICAL_ID
+    return this.records.create({ ...command, digitalEstate })
   }
 
   async transition(

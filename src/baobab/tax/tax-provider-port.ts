@@ -1,7 +1,13 @@
+import {
+  THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+  ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
+} from "../context/digital-estates"
+
 export type TaxTreatment = "STANDARD" | "ZERO_RATED" | "EXEMPT" | "REVERSE_CHARGE"
 export type TransactionType = "GOODS" | "SHIPPING" | "DISCOUNT" | "RETURN" | "REFUND"
 
 export type EffectiveTaxRule = {
+  digitalEstate: string
   ruleReference: string
   ruleVersion: string
   jurisdictionKey: string
@@ -64,9 +70,14 @@ export interface TaxDeterminationPort {
   determine(request: TaxDeterminationRequest): Promise<TaxDetermination>
 }
 
-export const selectEffectiveRule = (rules: readonly EffectiveTaxRule[], effectiveAt: Date) => {
+export const selectEffectiveRule = (
+  rules: readonly EffectiveTaxRule[],
+  effectiveAt: Date,
+  digitalEstate: string,
+) => {
   const matches = rules.filter(
     (rule) =>
+      rule.digitalEstate === digitalEstate &&
       rule.effectiveFrom <= effectiveAt &&
       (!rule.effectiveUntil || effectiveAt < rule.effectiveUntil),
   )
@@ -82,7 +93,19 @@ export class EffectiveDatedTaxProviderAdapter implements TaxDeterminationPort {
       throw new Error("Exactly one tax subject is required")
     if (!Number.isSafeInteger(request.taxableBasisMinor) || request.taxableBasisMinor < 0)
       throw new Error("Taxable basis must be a non-negative integer in minor units")
-    const rule = selectEffectiveRule(await this.provider.listRules(request), request.effectiveAt)
+    // A ZuriBeans (B2B) request always carries organisationId, a Thamani (B2C) request always
+    // carries customerReference — the XOR check above already guarantees exactly one. Rules
+    // belonging to the other Digital Estate must never match here, even when jurisdiction,
+    // classification, and transaction type otherwise line up (they can, since ZuriBeans and
+    // Thamani share Markets/currencies per country).
+    const digitalEstate = request.organisationId
+      ? ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID
+      : THAMANI_DIGITAL_ESTATE_CANONICAL_ID
+    const rule = selectEffectiveRule(
+      await this.provider.listRules(request),
+      request.effectiveAt,
+      digitalEstate,
+    )
     if (
       rule.jurisdictionKey !== request.jurisdictionKey ||
       rule.productTaxClassification !== request.productTaxClassification ||

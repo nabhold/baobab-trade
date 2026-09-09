@@ -1,3 +1,7 @@
+import {
+  THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+  ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
+} from "../context/digital-estates"
 import type { FulfilmentMode } from "./fulfilment-config"
 
 export type Incoterm = "EXW" | "FCA" | "FOB" | "CFR" | "CIF" | "DAP" | "DPU" | "DDP"
@@ -42,6 +46,7 @@ export type RequestFulfilmentCommand = {
 
 export type FulfilmentSnapshot = RequestFulfilmentCommand & {
   id: string
+  digitalEstate: string
   status: FulfilmentStatus
   shipmentReference?: string | null
   carrierReference?: string | null
@@ -53,7 +58,7 @@ export type FulfilmentSnapshot = RequestFulfilmentCommand & {
 
 export interface FulfilmentRecordRepository {
   findByIdempotencyKey(key: string): Promise<FulfilmentSnapshot | undefined>
-  create(command: RequestFulfilmentCommand): Promise<FulfilmentSnapshot>
+  create(command: RequestFulfilmentCommand & { digitalEstate: string }): Promise<FulfilmentSnapshot>
   transition(
     current: FulfilmentSnapshot,
     to: FulfilmentStatus,
@@ -120,10 +125,12 @@ export class MedusaFulfilmentAdapter implements FulfilmentPort {
   constructor(private readonly records: FulfilmentRecordRepository) {}
   async request(command: RequestFulfilmentCommand) {
     validateShipment(command)
-    return (
-      (await this.records.findByIdempotencyKey(command.idempotencyKey)) ??
-      this.records.create(command)
-    )
+    const existing = await this.records.findByIdempotencyKey(command.idempotencyKey)
+    if (existing) return existing
+    const digitalEstate = command.organisationId
+      ? ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID
+      : THAMANI_DIGITAL_ESTATE_CANONICAL_ID
+    return this.records.create({ ...command, digitalEstate })
   }
   async transition(
     current: FulfilmentSnapshot,

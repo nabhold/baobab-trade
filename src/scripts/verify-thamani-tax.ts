@@ -20,6 +20,7 @@ export default async function ({ container }: ExecArgs) {
         status: "ACTIVE",
       })
       return records.map((rule) => ({
+        digitalEstate: rule.digital_estate,
         ruleReference: rule.rule_reference,
         ruleVersion: rule.rule_version,
         jurisdictionKey: rule.jurisdiction_key,

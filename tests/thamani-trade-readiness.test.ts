@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
+import { THAMANI_DIGITAL_ESTATE_CANONICAL_ID } from "../src/baobab/context/digital-estates"
 import {
   ProjectedTradeComplianceAdapter,
-  ZURIBEANS_TRADE_LANES,
   type CrossBorderTransactionMetadata,
 } from "../src/baobab/trade-readiness"
 import {
+  THAMANI_TRADE_LANES,
   THAMANI_TRADE_PROFILES,
   requireVerifiedTradeProfile,
 } from "../src/baobab/thamani/trade-readiness"
@@ -31,6 +32,7 @@ describe("Thamani Gate 14 trade readiness", () => {
     )
     if (!profile) throw new Error("Missing import profile")
     const transaction: CrossBorderTransactionMetadata = {
+      digitalEstate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
       transactionReference: "test",
       orderReference: "procurement-test",
       marketKey: profile.marketKey,
@@ -64,7 +66,7 @@ describe("Thamani Gate 14 trade readiness", () => {
     const port = new ProjectedTradeComplianceAdapter(
       {
         async listPolicies(origin, destination) {
-          return ZURIBEANS_TRADE_LANES.filter(
+          return THAMANI_TRADE_LANES.filter(
             (lane) => lane.originCountry === origin && lane.destinationCountry === destination,
           ).map((lane) => ({
             ...lane,

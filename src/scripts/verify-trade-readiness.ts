@@ -1,4 +1,5 @@
 import type { ExecArgs } from "@medusajs/framework/types"
+import { ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID } from "../baobab/context/digital-estates"
 import {
   ProjectedTradeComplianceAdapter,
   type CrossBorderTransactionMetadata,
@@ -6,9 +7,13 @@ import {
 import type TradeReadinessModuleService from "../modules/trade-readiness/service"
 export default async function ({ container }: ExecArgs) {
   const service = container.resolve<TradeReadinessModuleService>("tradeReadiness")
-  const lanes = await service.listTradeLanePolicies({ status: "ACTIVE" })
+  const lanes = await service.listTradeLanePolicies({
+    digital_estate: ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
+    status: "ACTIVE",
+  })
   if (lanes.length !== 2) throw new Error(`Expected 2 trade lanes, found ${lanes.length}`)
   const transaction: CrossBorderTransactionMetadata = {
+    digitalEstate: ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
     transactionReference: "gate11-ug-za",
     orderReference: "gate11-order",
     marketKey: "zuribeans_ug",
@@ -48,10 +53,12 @@ export default async function ({ container }: ExecArgs) {
       async listPolicies(originCountry, destinationCountry) {
         return (
           await service.listTradeLanePolicies({
+            digital_estate: ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID,
             origin_country: originCountry,
             destination_country: destinationCountry,
           })
         ).map((lane) => ({
+          digitalEstate: lane.digital_estate,
           policyReference: lane.policy_reference,
           policyVersion: lane.policy_version,
           originCountry: lane.origin_country,

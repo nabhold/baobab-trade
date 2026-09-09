@@ -1,13 +1,22 @@
 import type { ExecArgs } from "@medusajs/framework/types"
+import { THAMANI_DIGITAL_ESTATE_CANONICAL_ID } from "../baobab/context/digital-estates"
 import {
   ProjectedTradeComplianceAdapter,
   type CrossBorderTransactionMetadata,
 } from "../baobab/trade-readiness"
-import { THAMANI_TRADE_PROFILES } from "../baobab/thamani/trade-readiness"
+import { THAMANI_TRADE_LANES, THAMANI_TRADE_PROFILES } from "../baobab/thamani/trade-readiness"
 import type TradeReadinessModuleService from "../modules/trade-readiness/service"
 
 export default async function ({ container }: ExecArgs) {
   const service = container.resolve<TradeReadinessModuleService>("tradeReadiness")
+  const lanes = await service.listTradeLanePolicies({
+    digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
+    status: "ACTIVE",
+  })
+  if (lanes.length !== THAMANI_TRADE_LANES.length)
+    throw new Error(
+      `Expected ${THAMANI_TRADE_LANES.length} Thamani trade lanes, found ${lanes.length}`,
+    )
   const stored = await service.listThamaniTradeProfiles({})
   if (stored.length !== THAMANI_TRADE_PROFILES.length)
     throw new Error(
@@ -20,6 +29,7 @@ export default async function ({ container }: ExecArgs) {
   )
   if (!profile) throw new Error("Missing Uganda-origin South Africa import fixture")
   const transaction: CrossBorderTransactionMetadata = {
+    digitalEstate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
     transactionReference: "thamani-gate14-ug-za",
     orderReference: "thamani-procurement-gate14",
     marketKey: "thamani_za",
@@ -55,10 +65,12 @@ export default async function ({ container }: ExecArgs) {
       async listPolicies(originCountry, destinationCountry) {
         return (
           await service.listTradeLanePolicies({
+            digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
             origin_country: originCountry,
             destination_country: destinationCountry,
           })
         ).map((lane) => ({
+          digitalEstate: lane.digital_estate,
           policyReference: lane.policy_reference,
           policyVersion: lane.policy_version,
           originCountry: lane.origin_country,

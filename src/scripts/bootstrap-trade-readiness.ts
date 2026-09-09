@@ -5,6 +5,7 @@ export default async function ({ container }: ExecArgs) {
   const service = container.resolve<TradeReadinessModuleService>("tradeReadiness")
   for (const lane of ZURIBEANS_TRADE_LANES) {
     const active = await service.listTradeLanePolicies({
+      digital_estate: lane.digitalEstate,
       origin_country: lane.originCountry,
       destination_country: lane.destinationCountry,
       status: "ACTIVE",
@@ -20,11 +21,13 @@ export default async function ({ container }: ExecArgs) {
         status: "SUPERSEDED",
       })
     const [existing] = await service.listTradeLanePolicies({
+      digital_estate: lane.digitalEstate,
       policy_reference: lane.policyReference,
       policy_version: lane.policyVersion,
     })
     if (!existing)
       await service.createTradeLanePolicies({
+        digital_estate: lane.digitalEstate,
         policy_reference: lane.policyReference,
         policy_version: lane.policyVersion,
         origin_country: lane.originCountry,

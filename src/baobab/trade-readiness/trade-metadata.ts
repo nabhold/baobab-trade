@@ -15,6 +15,7 @@ export type CrossBorderLine = {
   lotReference?: string
 }
 export type CrossBorderTransactionMetadata = {
+  digitalEstate: string
   transactionReference: string
   orderReference: string
   marketKey: string
@@ -39,6 +40,7 @@ export const validateCrossBorderMetadata = (value: CrossBorderTransactionMetadat
   if (value.originCountry === value.destinationCountry)
     throw new Error("Cross-border origin and destination must differ")
   for (const field of [
+    value.digitalEstate,
     value.legalSellerKey,
     value.exporterOrganisationId,
     value.importerOrganisationId,
