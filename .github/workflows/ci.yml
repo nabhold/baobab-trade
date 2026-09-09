@@ -31,6 +31,8 @@ jobs:
         run: npm test
       - name: Contract tests
         run: npm run test:contract
+      - name: Extraction port contract tests
+        run: npm run test:ports
       - name: Context isolation tests
         run: npm run test:isolation
       - name: Production conformance tests

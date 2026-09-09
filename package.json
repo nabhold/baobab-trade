@@ -69,6 +69,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:contract": "vitest run tests/tenant-context.test.ts tests/canonical-mapping-contract.test.ts tests/control-plane-client.test.ts",
+    "test:ports": "vitest run tests/order-orchestration.test.ts tests/inventory-availability.test.ts tests/pricing-decision.test.ts tests/payment-orchestration.test.ts tests/fulfilment-port.test.ts tests/trade-compliance-port.test.ts tests/ledger-evidence.test.ts",
     "test:isolation": "vitest run tests/commerce-context.test.ts",
     "test:thamani-events": "vitest run tests/thamani-events.test.ts tests/event-outbox.test.ts",
     "test:security": "vitest run tests/b2b-policy.test.ts tests/b2b-threat-model.test.ts tests/event-contracts.test.ts",
