@@ -1,5 +1,9 @@
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
-import { linkSalesChannelsToStockLocationWorkflow } from "@medusajs/core-flows"
+import {
+  createRegionsWorkflow,
+  linkSalesChannelsToStockLocationWorkflow,
+  updateRegionsWorkflow,
+} from "@medusajs/core-flows"
 import type {
   ExecArgs,
   IFulfillmentModuleService,
@@ -9,6 +13,7 @@ import type {
   IStockLocationService,
   IStoreModuleService,
   ITaxModuleService,
+  RemoteQueryFunction,
 } from "@medusajs/framework/types"
 import {
   toMedusaCurrencyCode,
@@ -82,18 +87,35 @@ export async function bootstrapMarket(
   // country already covered by another Digital Estate's Region (e.g.
   // ZuriBeans B2B provisioning Uganda before Thamani B2C does) is reused
   // as-is rather than recreated — see findByCountryCode.
+  //
+  // Region creation goes through `createRegionsWorkflow` (the same workflow
+  // the Admin API's Create Region route runs), NOT `regionService.createRegions`
+  // directly: the plain Region module service silently drops `payment_providers`
+  // — it's declared on the shared DTO type but the module itself has no way to
+  // create a cross-module link, so the resulting `region_payment_provider` row
+  // (what `validateCartPaymentsStep`/checkout actually reads) never gets
+  // created. Calling the module service here previously meant no Digital
+  // Estate's Region ever had a real payment provider binding, so no cart in
+  // any Market could ever pass checkout's payment validation.
   const existingRegions = await regionService.listRegions({}, { relations: ["countries"] })
   let region = findByCountryCode(existingRegions, config.countryCode)
   if (!region) {
-    region = await regionService.createRegions({
-      name: config.displayName,
-      currency_code: toMedusaCurrencyCode(config.defaultCurrency),
-      countries: [config.countryCode.toLowerCase()],
-      automatic_taxes: config.tax.automaticTaxes,
-      payment_providers: [...config.payment.providerIds],
-      metadata: regionMappingTag(config.marketKey),
+    const { result } = await createRegionsWorkflow(container).run({
+      input: {
+        regions: [
+          {
+            name: config.displayName,
+            currency_code: toMedusaCurrencyCode(config.defaultCurrency),
+            countries: [config.countryCode.toLowerCase()],
+            automatic_taxes: config.tax.automaticTaxes,
+            payment_providers: [...config.payment.providerIds],
+            metadata: regionMappingTag(config.marketKey),
+          },
+        ],
+      },
     })
-    log("created region", { regionId: region.id })
+    region = result[0]
+    log("created region with payment provider binding", { regionId: region.id })
   } else {
     if (region.currency_code !== toMedusaCurrencyCode(config.defaultCurrency)) {
       throw new Error(
@@ -104,6 +126,41 @@ export async function bootstrapMarket(
     log("region already provisioned for this country by another Digital Estate", {
       regionId: region.id,
     })
+  }
+
+  // Reconcile the region's payment provider bindings on every run, not just
+  // at creation: a Region reused from a sibling estate (above) never went
+  // through this Market's own `createRegionsWorkflow` call, and a Region
+  // that already exists from before this fix was ever applied has no
+  // `region_payment_provider` rows at all. Only ever add this Market's
+  // configured providers to whatever is already linked — never replace the
+  // full set — so a sibling estate's own provider choice for this shared
+  // Region is never dropped (`setRegionsPaymentProvidersStep`, which both
+  // workflows below run through, treats its input as the complete desired
+  // set and removes anything not in it).
+  const query = container.resolve<RemoteQueryFunction>(ContainerRegistrationKeys.QUERY)
+  const { data: regionPaymentProviderData } = await query.graph({
+    entity: "region",
+    fields: ["payment_providers.id"],
+    filters: { id: region.id },
+  })
+  const linkedProviderIds = new Set(
+    (
+      (regionPaymentProviderData[0] as { payment_providers?: { id: string }[] } | undefined)
+        ?.payment_providers ?? []
+    ).map((provider) => provider.id),
+  )
+  const missingProviderIds = config.payment.providerIds.filter(
+    (providerId) => !linkedProviderIds.has(providerId),
+  )
+  if (missingProviderIds.length > 0) {
+    await updateRegionsWorkflow(container).run({
+      input: {
+        selector: { id: region.id },
+        update: { payment_providers: [...linkedProviderIds, ...missingProviderIds] },
+      },
+    })
+    log("bound missing payment providers to region", { providerIds: missingProviderIds })
   }
 
   // Sales channel.
