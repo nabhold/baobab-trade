@@ -19,7 +19,17 @@ export default async function bootstrapThamaniPromotions({ container }: ExecArgs
   let created = 0
   for (const config of THAMANI_PROMOTIONS) {
     const [existing] = await promotionService.listPromotions({ code: config.code })
-    if (existing) continue
+    if (existing) {
+      // A promotion bootstrapped before `is_tax_inclusive` existed on this
+      // config would otherwise keep the database default (`false`) forever
+      // — this only ever creates a promotion once, so nothing else revisits
+      // an already-existing row.
+      if (!existing.is_tax_inclusive) {
+        await promotionService.updatePromotions({ id: existing.id, is_tax_inclusive: true })
+        logger.info(`Updated ${config.code} to tax-inclusive`)
+      }
+      continue
+    }
 
     await createPromotionsWorkflow(container).run({
       input: {

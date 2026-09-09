@@ -53,6 +53,7 @@ import {
   PromotionActions,
 } from "@medusajs/framework/utils"
 import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
+import type ThamaniModuleService from "../modules/thamani/service"
 
 /**
  * A throwaway, non-Thamani Promotion — `findThamaniPromotionConfig` returns
@@ -109,18 +110,43 @@ async function addPromotionCode(
 async function resolveVariant(
   productService: IProductModuleService,
   productHandle: string,
-): Promise<{ id: string; sku: string }> {
+): Promise<{ id: string; sku: string; productId: string }> {
   const [product] = await productService.listProducts(
     { handle: productHandle },
     { relations: ["variants"] },
   )
   const variant = product?.variants?.[0]
-  if (!variant?.sku) {
+  if (!variant?.sku || !product) {
     throw new Error(
       `No product/variant found for handle "${productHandle}" — run bootstrap:thamani-catalogue first`,
     )
   }
-  return { id: variant.id, sku: variant.sku }
+  return { id: variant.id, sku: variant.sku, productId: product.id }
+}
+
+const REGRESSION_POLICY_REFERENCE = "regression:thamani-promotion-application"
+
+async function ensureDisposableEligibility(
+  thamani: ThamaniModuleService,
+  productId: string,
+  marketKey: string,
+): Promise<void> {
+  const [existing] = await thamani.listMarketProductEligibilities({
+    product_id: productId,
+    market_key: marketKey,
+  })
+  if (existing) {
+    throw new Error(
+      `Product ${productId} already has a ${marketKey} eligibility record — expected none pending Gate 14 review; ` +
+        "refusing to run this destructive fixture against a database whose fixture state isn't as expected",
+    )
+  }
+  await thamani.createMarketProductEligibilities({
+    product_id: productId,
+    market_key: marketKey,
+    status: "ACTIVE",
+    policy_reference: REGRESSION_POLICY_REFERENCE,
+  })
 }
 
 /**
@@ -212,6 +238,7 @@ export default async function regressionThamaniPromotionApplication({
   const inventoryService = container.resolve<IInventoryService>(Modules.INVENTORY)
   const stockLocationService = container.resolve<IStockLocationService>(Modules.STOCK_LOCATION)
   const promotionService = container.resolve<IPromotionModuleService>(Modules.PROMOTION)
+  const thamani = container.resolve<ThamaniModuleService>("thamani")
 
   const regions = await regionService.listRegions({}, { relations: ["countries"] })
   const ugandaRegion = findByCountryCode(regions, "UG")
@@ -234,6 +261,15 @@ export default async function regressionThamaniPromotionApplication({
   const instantCoffeeVariantId = instantCoffee.id
   const greenTeaVariantId = greenTea.id
   const otherPromotionId = await ensureOtherPromotion(promotionService, container)
+
+  // `thamani-cart-eligibility-guard.ts` (a separate Gate 14 fix) rejects
+  // adding either fixture item to a cart at all unless it already has an
+  // ACTIVE Market eligibility — neither does, since nothing in the launch
+  // catalogue is verified yet. Give both a disposable one of this
+  // regression's own, scoped to a `policy_reference` that can never be
+  // mistaken for a real product's.
+  await ensureDisposableEligibility(thamani, instantCoffee.productId, "thamani_ug")
+  await ensureDisposableEligibility(thamani, greenTea.productId, "thamani_ug")
 
   const cartIds: string[] = []
   try {
@@ -411,6 +447,14 @@ export default async function regressionThamaniPromotionApplication({
   } finally {
     if (cartIds.length > 0) await cartService.deleteCarts(cartIds)
     await promotionService.deletePromotions([otherPromotionId])
+    const disposableEligibilities = await thamani.listMarketProductEligibilities({
+      product_id: [instantCoffee.productId, greenTea.productId],
+      market_key: "thamani_ug",
+      policy_reference: REGRESSION_POLICY_REFERENCE,
+    })
+    if (disposableEligibilities.length) {
+      await thamani.deleteMarketProductEligibilities(disposableEligibilities.map((e) => e.id))
+    }
   }
 
   container

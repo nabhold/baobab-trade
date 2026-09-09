@@ -4,7 +4,7 @@
  * — which calls `updateTaxLinesWorkflow.runAsStep(...)` inline while
  * building the cart, exactly the same tax-calculation path a real
  * add-to-cart request goes through — and asserts the resulting tax lines,
- * then deletes every Cart it created.
+ * then deletes every Cart (and the disposable eligibility rows) it created.
  *
  * A review found Gate 13's real tax logic (`EffectiveDatedTaxProviderAdapter`
  * / `THAMANI_STANDARD_TAX_RULES`) was only ever exercised by bootstrap/verify
@@ -24,6 +24,14 @@
  *      item still resolves whatever Medusa's native rate-matching produces
  *      (0%, since no `tax_rate` row exists for it either), proving this
  *      provider changes nothing for the other Digital Estate.
+ *
+ * `thamani-cart-eligibility-guard.ts` (a separate Gate 14 fix) rejects
+ * adding any Thamani item with no ACTIVE Market eligibility before this
+ * workflow ever reaches tax calculation — the launch catalogue's launch
+ * profiles are all deliberately UNVERIFIED (see bootstrap-thamani-
+ * catalogue.ts), so this script gives both test products a disposable
+ * ACTIVE eligibility row of its own, scoped to this regression's own
+ * `policy_reference` so it is never mistaken for a real one.
  */
 import { createCartWorkflow, createInventoryLevelsWorkflow } from "@medusajs/core-flows"
 import type {
@@ -38,6 +46,32 @@ import type {
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab/market/mapping"
 import ThamaniTaxProviderService from "../modules/thamani-tax-provider/service"
+import type ThamaniModuleService from "../modules/thamani/service"
+
+const REGRESSION_POLICY_REFERENCE = "regression:thamani-tax-provider-wiring"
+
+async function ensureDisposableEligibility(
+  thamani: ThamaniModuleService,
+  productId: string,
+  marketKey: string,
+): Promise<void> {
+  const [existing] = await thamani.listMarketProductEligibilities({
+    product_id: productId,
+    market_key: marketKey,
+  })
+  if (existing) {
+    throw new Error(
+      `Product ${productId} already has a ${marketKey} eligibility record — expected none pending Gate 14 review; ` +
+        "refusing to run this destructive fixture against a database whose fixture state isn't as expected",
+    )
+  }
+  await thamani.createMarketProductEligibilities({
+    product_id: productId,
+    market_key: marketKey,
+    status: "ACTIVE",
+    policy_reference: REGRESSION_POLICY_REFERENCE,
+  })
+}
 
 /**
  * An error thrown *inside* a workflow step (here, the provider's fail-closed
@@ -55,18 +89,18 @@ const errorMessage = (error: unknown): string =>
 async function resolveVariant(
   productService: IProductModuleService,
   productHandle: string,
-): Promise<{ id: string; sku: string }> {
+): Promise<{ id: string; sku: string; productId: string }> {
   const [product] = await productService.listProducts(
     { handle: productHandle },
     { relations: ["variants"] },
   )
   const variant = product?.variants?.[0]
-  if (!variant?.sku) {
+  if (!variant?.sku || !product) {
     throw new Error(
       `No product/variant found for handle "${productHandle}" — run bootstrap:thamani-catalogue first`,
     )
   }
-  return { id: variant.id, sku: variant.sku }
+  return { id: variant.id, sku: variant.sku, productId: product.id }
 }
 
 async function ensureInventoryLevel(
@@ -123,6 +157,7 @@ export default async function regressionThamaniTaxProviderWiring({
   const cartService = container.resolve<ICartModuleService>(Modules.CART)
   const inventoryService = container.resolve<IInventoryService>(Modules.INVENTORY)
   const stockLocationService = container.resolve<IStockLocationService>(Modules.STOCK_LOCATION)
+  const thamani = container.resolve<ThamaniModuleService>("thamani")
 
   const regions = await regionService.listRegions({}, { relations: ["countries"] })
   const ugandaRegion = findByCountryCode(regions, "UG")
@@ -179,6 +214,15 @@ export default async function regressionThamaniTaxProviderWiring({
     zuribeansItemVariant.sku,
     zuribeansUgandaStockLocation.id,
   )
+
+  // `thamani-cart-eligibility-guard.ts` (a separate Gate 14 fix) rejects
+  // adding either test item to a cart at all unless it already has an
+  // ACTIVE Market eligibility — neither does, since nothing in the launch
+  // catalogue is verified yet. Give both a disposable one of this
+  // regression's own, scoped to a `policy_reference` that can never be
+  // mistaken for a real product's.
+  await ensureDisposableEligibility(thamani, standardVariant.productId, "thamani_ug")
+  await ensureDisposableEligibility(thamani, zeroRatedVariant.productId, "thamani_ug")
 
   const cartIds: string[] = []
   try {
@@ -240,6 +284,14 @@ export default async function regressionThamaniTaxProviderWiring({
     }
   } finally {
     if (cartIds.length > 0) await cartService.deleteCarts(cartIds)
+    const disposableEligibilities = await thamani.listMarketProductEligibilities({
+      product_id: [standardVariant.productId, zeroRatedVariant.productId],
+      market_key: "thamani_ug",
+      policy_reference: REGRESSION_POLICY_REFERENCE,
+    })
+    if (disposableEligibilities.length) {
+      await thamani.deleteMarketProductEligibilities(disposableEligibilities.map((e) => e.id))
+    }
   }
 
   container
