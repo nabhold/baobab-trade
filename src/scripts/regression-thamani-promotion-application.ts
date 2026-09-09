@@ -262,17 +262,19 @@ export default async function regressionThamaniPromotionApplication({
   const greenTeaVariantId = greenTea.id
   const otherPromotionId = await ensureOtherPromotion(promotionService, container)
 
-  // `thamani-cart-eligibility-guard.ts` (a separate Gate 14 fix) rejects
-  // adding either fixture item to a cart at all unless it already has an
-  // ACTIVE Market eligibility — neither does, since nothing in the launch
-  // catalogue is verified yet. Give both a disposable one of this
-  // regression's own, scoped to a `policy_reference` that can never be
-  // mistaken for a real product's.
-  await ensureDisposableEligibility(thamani, instantCoffee.productId, "thamani_ug")
-  await ensureDisposableEligibility(thamani, greenTea.productId, "thamani_ug")
-
   const cartIds: string[] = []
   try {
+    // `thamani-cart-eligibility-guard.ts` (a separate Gate 14 fix) rejects
+    // adding either fixture item to a cart at all unless it already has an
+    // ACTIVE Market eligibility — neither does, since nothing in the launch
+    // catalogue is verified yet. Give both a disposable one of this
+    // regression's own, scoped to a `policy_reference` that can never be
+    // mistaken for a real product's. Inside the try so a failure partway
+    // through (e.g. the second call finding an unexpected pre-existing row)
+    // still reaches the `finally` cleanup for whichever one did get created.
+    await ensureDisposableEligibility(thamani, instantCoffee.productId, "thamani_ug")
+    await ensureDisposableEligibility(thamani, greenTea.productId, "thamani_ug")
+
     // THAMANI10 (10% off, UGX): 10% of the instant coffee's 22,000 UGX
     // standard price is a 2,200 UGX line-item discount.
     const percentageCartId = await createTestCart(

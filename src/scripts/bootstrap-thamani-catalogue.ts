@@ -172,19 +172,26 @@ async function ensureRetailProjection(
     }
 
     // A row this same catalogue-onboarding process created earlier — before
-    // this gate existed, or before its trade profile was revoked — must be
-    // reconciled to the current verification state, not left ACTIVE
-    // forever just because it already exists. A row managed by another
-    // authority (a different `policy_reference` — e.g. a manual suspension)
-    // is left untouched either way; suspending it back to ACTIVE once
-    // verified is that other process's call, not this bootstrap's.
-    if (
-      eligibility.policy_reference === policyReference &&
-      !isVerified &&
-      eligibility.status === "ACTIVE"
-    ) {
-      await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "SUSPENDED" })
-      logger.warn(`Suspended ${marketKey} eligibility for ${config.sku}: no longer verified`)
+    // this gate existed, before its trade profile was revoked, or before a
+    // once-revoked profile was re-verified — must be reconciled to the
+    // current verification state, not left however it was found just
+    // because it already exists.
+    //
+    // `WITHDRAWN` is used (not `SUSPENDED`) specifically because it is the
+    // one status this bootstrap ever writes for compliance reasons — never
+    // for anything else — so reconciling a `WITHDRAWN` row back to `ACTIVE`
+    // on reverification can never be undoing someone else's decision.
+    // `SUSPENDED` is left alone in both directions: it is reserved for a
+    // different authority (e.g. a manual, non-compliance suspension —
+    // `regression-thamani-eligibility-sync.ts` proves this exact case), and
+    // this bootstrap must never reactivate a row it did not itself demote.
+    if (eligibility.policy_reference !== policyReference) continue
+    if (!isVerified && eligibility.status === "ACTIVE") {
+      await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "WITHDRAWN" })
+      logger.warn(`Withdrew ${marketKey} eligibility for ${config.sku}: no longer verified`)
+    } else if (isVerified && eligibility.status === "WITHDRAWN") {
+      await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "ACTIVE" })
+      logger.info(`Reactivated ${marketKey} eligibility for ${config.sku}: verification restored`)
     }
   }
 }
