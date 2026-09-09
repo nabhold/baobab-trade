@@ -46,6 +46,14 @@ export type MarketBootstrapConfig = {
     mode: ProviderMode
     providerId: string
     automaticTaxes: boolean
+    /**
+     * Whether a variant's stored price is the final, tax-inclusive customer
+     * price (so tax is carved out of it) rather than a net price tax gets
+     * added on top of. Provisioned as a `PricePreference` scoped to this
+     * Market's Region (see `provisioning.ts`) — only when `true`; `false`
+     * leaves Medusa's own tax-exclusive default untouched.
+     */
+    pricesIncludeTax: boolean
     policyReference: string
   }
 }
@@ -108,6 +116,7 @@ export const ZURIBEANS_UGANDA: MarketBootstrapConfig = {
     mode: "NATIVE",
     providerId: "tp_system",
     automaticTaxes: true,
+    pricesIncludeTax: false,
     policyReference: "control-plane:zuribeans_ug:tax",
   },
 }
@@ -144,6 +153,7 @@ export const ZURIBEANS_SOUTH_AFRICA: MarketBootstrapConfig = {
     mode: "NATIVE",
     providerId: "tp_system",
     automaticTaxes: true,
+    pricesIncludeTax: false,
     policyReference: "control-plane:zuribeans_za:tax",
   },
 }

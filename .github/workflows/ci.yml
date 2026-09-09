@@ -213,6 +213,9 @@ jobs:
       - name: Verify Thamani Gate 13 inclusive tax, provenance, and reconciliation
         run: npm run verify:thamani-tax
 
+      - name: Regression — Thamani B2C tax provider wiring (real VAT on real carts, fail-closed for unsourced categories, ZuriBeans unaffected — mutates this disposable database only)
+        run: npm run regression:thamani-tax-provider-wiring
+
       - name: Bootstrap Thamani Gate 14 product trade profiles
         run: npm run bootstrap:thamani-trade-readiness
 

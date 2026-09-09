@@ -60,6 +60,7 @@
     "verify:thamani-erp-integration": "medusa exec ./src/scripts/verify-thamani-erp-integration.ts",
     "verify:thamani-events": "medusa exec ./src/scripts/verify-thamani-events.ts",
     "regression:thamani-eligibility-sync": "medusa exec ./src/scripts/regression-thamani-eligibility-sync.ts",
+    "regression:thamani-tax-provider-wiring": "medusa exec ./src/scripts/regression-thamani-tax-provider-wiring.ts",
     "regression:thamani-promotion-application": "medusa exec ./src/scripts/regression-thamani-promotion-application.ts",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",

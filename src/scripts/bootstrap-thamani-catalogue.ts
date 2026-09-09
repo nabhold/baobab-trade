@@ -4,6 +4,7 @@ import type {
   IFulfillmentModuleService,
   IProductModuleService,
   ISalesChannelModuleService,
+  Logger,
 } from "@medusajs/framework/types"
 import { Modules } from "@medusajs/framework/utils"
 import {
@@ -14,8 +15,10 @@ import {
 } from "../baobab/thamani/catalogue"
 import { THAMANI_SUPPLIERS } from "../baobab/thamani/suppliers"
 import { deriveActiveEligibleMarketKeys } from "../baobab/thamani/search/projection"
+import { requireVerifiedTradeProfile } from "../baobab/thamani/trade-readiness"
 import { findByMetadataKey } from "../baobab/market/mapping"
 import type ThamaniModuleService from "../modules/thamani/service"
+import type TradeReadinessModuleService from "../modules/trade-readiness/service"
 
 /**
  * The subset of catalogue configuration the `thamani_product` search index
@@ -96,6 +99,8 @@ async function ensureSuppliers(thamani: ThamaniModuleService): Promise<Map<strin
 
 async function ensureRetailProjection(
   thamani: ThamaniModuleService,
+  tradeReadiness: TradeReadinessModuleService,
+  logger: Logger,
   productId: string,
   supplierIdByKey: Map<string, string>,
   config: ThamaniProductConfig,
@@ -128,14 +133,37 @@ async function ensureRetailProjection(
       product_id: productId,
       market_key: marketKey,
     })
-    if (!eligibility) {
-      await thamani.createMarketProductEligibilities({
-        product_id: productId,
-        market_key: marketKey,
-        status: "ACTIVE",
-        policy_reference: `control-plane:${marketKey}:catalogue`,
+    if (eligibility) continue
+
+    // Gate 14 fail-closed compliance: a product only becomes sellable in a
+    // Market once its HS classification has actually been reviewed. This is
+    // the ONLY enforcement point — no ACTIVE eligibility row is created (so
+    // nothing downstream ever treats the product as eligible, see
+    // `deriveActiveEligibleMarketKeys`) until a verified
+    // `ThamaniTradeProfile` exists for this product/Market pair.
+    const [tradeProfile] = await tradeReadiness.listThamaniTradeProfiles({
+      canonical_product_key: config.canonicalKey,
+      market_key: marketKey,
+    })
+    try {
+      requireVerifiedTradeProfile({
+        hsClassificationStatus: tradeProfile?.hs_classification_status ?? "UNVERIFIED",
       })
+    } catch (error) {
+      logger.warn(
+        `Skipping ${marketKey} eligibility for ${config.sku}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+      continue
     }
+
+    await thamani.createMarketProductEligibilities({
+      product_id: productId,
+      market_key: marketKey,
+      status: "ACTIVE",
+      policy_reference: `control-plane:${marketKey}:catalogue`,
+    })
   }
 }
 
@@ -145,6 +173,7 @@ export default async function bootstrapThamaniCatalogue({ container }: ExecArgs)
   const salesChannelService = container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
   const fulfillmentService = container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT)
   const thamani = container.resolve<ThamaniModuleService>("thamani")
+  const tradeReadiness = container.resolve<TradeReadinessModuleService>("tradeReadiness")
 
   const salesChannels = await salesChannelService.listSalesChannels({})
   const salesChannel = findByMetadataKey(salesChannels, "baobab_sales_channel_key", "thamani_b2c")
@@ -214,7 +243,14 @@ export default async function bootstrapThamaniCatalogue({ container }: ExecArgs)
 
     const variant = product.variants?.[0]
     if (!variant) throw new Error(`Product ${config.handle} has no retail variant`)
-    await ensureRetailProjection(thamani, product.id, supplierIdByKey, config)
+    await ensureRetailProjection(
+      thamani,
+      tradeReadiness,
+      logger,
+      product.id,
+      supplierIdByKey,
+      config,
+    )
 
     // Keep the Gate 7 search-projection metadata in sync on every run, not
     // just at creation: search reads from `metadata`, never from the
