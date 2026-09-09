@@ -86,14 +86,21 @@ export class MedusaPaymentOrchestrationAdapter implements PaymentOrchestrationPo
     if (command.terms !== "PREPAID" && command.method !== "INVOICE_TERMS") {
       throw new Error("Commercial invoice terms require the INVOICE_TERMS method")
     }
-    const existing = await this.records.findByIdempotencyKey(command.idempotencyKey)
-    if (existing) return existing
     // organisationId/customerReference exclusivity is already enforced above — this is the same
     // trusted, explicit derivation tax and trade-readiness use, never inferred from Market or
     // currency (ZuriBeans and Thamani can share both per country).
     const digitalEstate = command.organisationId
       ? ZURIBEANS_DIGITAL_ESTATE_CANONICAL_ID
       : THAMANI_DIGITAL_ESTATE_CANONICAL_ID
+    const existing = await this.records.findByIdempotencyKey(command.idempotencyKey)
+    if (existing) {
+      // findByIdempotencyKey looks up by idempotencyKey alone — a caller-supplied string with
+      // no cross-estate uniqueness guarantee. Returning the other estate's payment here would
+      // leak its full snapshot to this request instead of just failing loudly.
+      if (existing.digitalEstate !== digitalEstate)
+        throw new Error("Payment idempotency key reused across Digital Estates")
+      return existing
+    }
     return this.records.create({ ...command, digitalEstate })
   }
 

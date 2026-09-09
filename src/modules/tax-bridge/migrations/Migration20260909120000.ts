@@ -5,11 +5,17 @@ export class Migration20260909120000 extends Migration {
     this.addSql(
       'alter table "tax_rule_projection" add column if not exists "digital_estate" text null;',
     )
-    // Every tax_rule_projection row created before this migration belongs to Thamani's Gate 13
-    // bootstrap — ZuriBeans' own Gate 10 bootstrap deliberately creates no rules yet (see its
-    // "without statutory rates" log line), so there is nothing else to disambiguate here.
+    // ZuriBeans' own Gate 10 bootstrap deliberately creates no statutory rules (see its
+    // "without statutory rates" log line), but its verify:tax script does create one synthetic
+    // fixture rule ("gate10:synthetic:ug:goods") in this table on any environment where it has
+    // already run — every real Thamani rule reference carries a "thamani:" prefix
+    // (THAMANI_STANDARD_TAX_RULES), so that prefix, not "everything else is Thamani", is the
+    // correct signal.
     this.addSql(
-      `update "tax_rule_projection" set "digital_estate" = 'estate:thamani-b2c' where "digital_estate" is null;`,
+      `update "tax_rule_projection" set "digital_estate" = case
+        when "rule_reference" like 'thamani:%' then 'estate:thamani-b2c'
+        else 'estate:zuribeans-b2b'
+      end where "digital_estate" is null;`,
     )
     this.addSql('alter table "tax_rule_projection" alter column "digital_estate" set not null;')
     this.addSql(

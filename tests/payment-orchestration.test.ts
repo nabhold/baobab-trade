@@ -61,6 +61,19 @@ describe("PaymentOrchestrationPort", () => {
     expect(thamaniPayment.digitalEstate).toBe("estate:thamani-b2c")
   })
 
+  it("rejects a B2C request that reuses a B2B idempotency key instead of returning the other estate's payment", async () => {
+    const repository = new MemoryRepository()
+    const adapter = new MedusaPaymentOrchestrationAdapter(repository)
+    await adapter.initiate(command)
+    await expect(
+      adapter.initiate({
+        ...command,
+        organisationId: undefined,
+        customerReference: "customer-1",
+      }),
+    ).rejects.toThrow(/reused across Digital Estates/)
+  })
+
   it("rejects invalid transitions and terms disguised as settlement", async () => {
     const adapter = new MedusaPaymentOrchestrationAdapter(new MemoryRepository())
     const payment = await adapter.initiate(command)

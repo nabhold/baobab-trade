@@ -54,6 +54,17 @@ describe("FulfilmentPort", () => {
     const allocated = await port.transition(accepted, "ALLOCATED", "allocate-1")
     await expect(port.transition(allocated, "DISPATCHED", "dispatch-1")).rejects.toThrow(/evidence/)
   })
+  it("rejects a B2C request that reuses a B2B idempotency key instead of returning the other estate's fulfilment", async () => {
+    const port = new MedusaFulfilmentAdapter(new MemoryRecords())
+    await port.request(command)
+    await expect(
+      port.request({
+        ...command,
+        organisationId: undefined,
+        customerReference: "customer-1",
+      }),
+    ).rejects.toThrow(/reused across Digital Estates/)
+  })
   it("rejects incomplete cross-border trade metadata", async () => {
     const port = new MedusaFulfilmentAdapter(new MemoryRecords())
     await expect(

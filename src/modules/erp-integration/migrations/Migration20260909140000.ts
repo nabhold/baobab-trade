@@ -5,12 +5,14 @@ export class Migration20260909140000 extends Migration {
     this.addSql(
       'alter table "erp_entity_mapping" add column if not exists "digital_estate" text null;',
     )
-    // Thamani's own canonical keys use a "th-"/"TH-" prefix by convention (see
-    // bootstrap-thamani-erp-integration.ts); everything else predates Thamani's Gate 15 and was
-    // written by ZuriBeans' Gate 12 bootstrap.
+    // canonical_entity_id's "th-"/"TH-" prefix convention only covers Thamani's PRODUCT and
+    // WAREHOUSE mappings — its SUPPLIER mappings use supplier keys like
+    // "sup_ug_mountain_roasters" with no such prefix. external_reference is the one field every
+    // Thamani mapping (product, supplier, and warehouse alike) carries a ":thamani:" marker in —
+    // see bootstrap-thamani-erp-integration.ts's external_reference construction for all three.
     this.addSql(
       `update "erp_entity_mapping" set "digital_estate" = case
-        when lower("canonical_entity_id") like 'th-%' then 'estate:thamani-b2c'
+        when "external_reference" like '%:thamani:%' then 'estate:thamani-b2c'
         else 'estate:zuribeans-b2b'
       end where "digital_estate" is null;`,
     )
