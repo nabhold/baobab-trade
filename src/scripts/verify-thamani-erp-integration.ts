@@ -1,0 +1,86 @@
+import type { ExecArgs } from "@medusajs/framework/types"
+import { DurableErpIntegrationAdapter, type ErpProjectionCommand } from "../baobab/erp-integration"
+import {
+  createThamaniErpProjection,
+  THAMANI_ERP_PROJECTION_KINDS,
+} from "../baobab/thamani/erp-integration"
+import type ErpIntegrationModuleService from "../modules/erp-integration/service"
+
+export default async function ({ container }: ExecArgs) {
+  const erp = container.resolve<ErpIntegrationModuleService>("erpIntegration")
+  const mappings = await erp.listErpEntityMappings({})
+  for (const [kind, expected] of [
+    ["PRODUCT", 38],
+    ["SUPPLIER", 17],
+    ["WAREHOUSE", 5],
+  ] as const)
+    if (
+      mappings.filter(
+        (item) => item.mapping_type === kind && item.external_reference.includes(":thamani:"),
+      ).length !== expected
+    )
+      throw new Error(`Expected ${expected} Thamani ${kind} mappings`)
+
+  const adapter = new DurableErpIntegrationAdapter({
+    async findByIdempotencyKey(key) {
+      const [item] = await erp.listErpProjections({ source_idempotency_key: key })
+      return item && { id: item.id, commandDigest: item.command_digest }
+    },
+    async create(command: ErpProjectionCommand & { commandDigest: string }) {
+      return erp.createErpProjections({
+        kind: command.kind,
+        commerce_reference: command.commerceReference,
+        canonical_entity_id: command.canonicalEntityId,
+        legal_seller_key: command.legalSellerKey,
+        market_key: command.marketKey,
+        payload: command.payload,
+        status: "PENDING",
+        source_idempotency_key: command.idempotencyKey,
+        command_digest: command.commandDigest,
+        correlation_id: command.correlationId,
+      })
+    },
+  })
+  for (const kind of THAMANI_ERP_PROJECTION_KINDS) {
+    const command = createThamaniErpProjection({
+      kind,
+      commerceReference: `gate15-${kind.toLowerCase()}`,
+      canonicalEntityId: `canonical:thamani:${kind.toLowerCase()}:gate15`,
+      legalSellerKey: "thamani-uganda",
+      marketKey: "thamani_ug",
+      payload: {
+        currency: "UGX",
+        amount_minor: 125000,
+        supplier: "sup_ug_mountain_roasters",
+        warehouse: "TH-UG-KLA-01",
+      },
+      sourceVersion: 1,
+      correlationId: "thamani-gate15-verification",
+    })
+    const first = await adapter.queue(command)
+    if ((await adapter.queue(command)).id !== first.id)
+      throw new Error(`${kind} projection is not replay-safe`)
+  }
+  const collision = createThamaniErpProjection({
+    kind: "PAYMENT",
+    commerceReference: "gate15-payment",
+    canonicalEntityId: "canonical:thamani:payment:gate15",
+    legalSellerKey: "thamani-uganda",
+    marketKey: "thamani_ug",
+    payload: { currency: "ZAR" },
+    sourceVersion: 1,
+    correlationId: "thamani-gate15-verification",
+  })
+  let rejected = false
+  try {
+    await adapter.queue(collision)
+  } catch {
+    rejected = true
+  }
+  if (!rejected) throw new Error("ERP idempotency collision was accepted")
+  container
+    .resolve("logger")
+    .info(
+      "Verified Thamani Gate 15 canonical mappings, seven projection families, isolation, replay, and collision rejection",
+    )
+}

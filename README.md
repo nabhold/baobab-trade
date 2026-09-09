@@ -204,6 +204,13 @@ imports to review until customs authority evidence is recorded. Run
 `npm run verify:thamani-trade-readiness`; see
 `docs/architecture/thamani-trade-readiness.md`.
 
+Gate 15 adds canonical ERP mappings for Thamani products, procurement
+suppliers and warehouses, plus replay-safe product, supplier, warehouse,
+order, shipment, payment and return/refund projections. Run
+`npm run bootstrap:thamani-erp-integration` and
+`npm run verify:thamani-erp-integration`; see
+`docs/architecture/thamani-erp-integration.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.

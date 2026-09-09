@@ -18,9 +18,9 @@ export default async function ({ container }: ExecArgs) {
   const adapter = new DurableErpIntegrationAdapter({
     async findByIdempotencyKey(key) {
       const [item] = await erp.listErpProjections({ source_idempotency_key: key })
-      return item
+      return item && { id: item.id, commandDigest: item.command_digest }
     },
-    async create(command: ErpProjectionCommand) {
+    async create(command: ErpProjectionCommand & { commandDigest: string }) {
       return erp.createErpProjections({
         kind: command.kind,
         commerce_reference: command.commerceReference,
@@ -30,6 +30,7 @@ export default async function ({ container }: ExecArgs) {
         payload: command.payload,
         status: "PENDING",
         source_idempotency_key: command.idempotencyKey,
+        command_digest: command.commandDigest,
         correlation_id: command.correlationId,
       })
     },
