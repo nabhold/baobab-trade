@@ -75,7 +75,7 @@ export default async function ({ container }: ExecArgs) {
         warehouse: "TH-UG-KLA-01",
       },
       sourceVersion: 1,
-      correlationId: "thamani-gate15-verification",
+      correlationId: "15151515-1515-4515-8515-151515151515",
     })
     const first = await adapter.queue(command)
     if ((await adapter.queue(command)).id !== first.id)
@@ -89,7 +89,7 @@ export default async function ({ container }: ExecArgs) {
     marketKey: "thamani_ug",
     payload: { currency: "ZAR" },
     sourceVersion: 1,
-    correlationId: "thamani-gate15-verification",
+    correlationId: "15151515-1515-4515-8515-151515151515",
   })
   let rejected = false
   try {

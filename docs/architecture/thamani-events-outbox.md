@@ -9,7 +9,7 @@ The Gate 15 ERP projection insert activates a database trigger only for the `tha
 | Scope                 | Required value                                             |
 | --------------------- | ---------------------------------------------------------- |
 | Tenant projection     | `tenant-thamani` pending Control Plane registration        |
-| Owning legal entity   | `thamani`                                                  |
+| Owning legal entity   | `canonical:legal-entity:thamani`                           |
 | Digital Estate        | `estate:thamani-b2c` (Control Plane canonical ID)          |
 | Markets               | `thamani_ug`, `thamani_za`                                 |
 | Legal sellers         | `thamani-uganda`, `thamani-south-africa`, paired to Market |
