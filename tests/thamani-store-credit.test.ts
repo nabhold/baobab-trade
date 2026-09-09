@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
-  buildThamaniStoreCreditOrderInput,
+  buildThamaniStoreCreditOrderChangeInput,
   createThamaniStoreCreditErpProjection,
   THAMANI_STORE_CREDIT_REASON_CONFIG,
 } from "../src/baobab/thamani/store-credit"
@@ -23,7 +23,7 @@ describe("Thamani Gate 17 store credit", () => {
   it("rejects a non-positive amount for every reason", () => {
     for (const reason of ["REFUND", "SERVICE", "PROMOTIONAL"] as const) {
       expect(() =>
-        buildThamaniStoreCreditOrderInput({
+        buildThamaniStoreCreditOrderChangeInput({
           orderId: "order_1",
           amountMinor: 0,
           reason,
@@ -32,7 +32,7 @@ describe("Thamani Gate 17 store credit", () => {
         }),
       ).toThrow("positive integer")
       expect(() =>
-        buildThamaniStoreCreditOrderInput({
+        buildThamaniStoreCreditOrderChangeInput({
           orderId: "order_1",
           amountMinor: -100,
           reason,
@@ -45,65 +45,69 @@ describe("Thamani Gate 17 store credit", () => {
 
   it("requires REFUND and PROMOTIONAL to trace back to a source referenceId", () => {
     expect(() =>
-      buildThamaniStoreCreditOrderInput({ orderId: "order_1", amountMinor: 100, reason: "REFUND" }),
+      buildThamaniStoreCreditOrderChangeInput({
+        orderId: "order_1",
+        amountMinor: 100,
+        reason: "REFUND",
+      }),
     ).toThrow("referenceId")
     expect(() =>
-      buildThamaniStoreCreditOrderInput({
+      buildThamaniStoreCreditOrderChangeInput({
         orderId: "order_1",
         amountMinor: 100,
         reason: "PROMOTIONAL",
       }),
     ).toThrow("referenceId")
     expect(
-      buildThamaniStoreCreditOrderInput({
+      buildThamaniStoreCreditOrderChangeInput({
         orderId: "order_1",
         amountMinor: 100,
         reason: "REFUND",
         referenceId: "return_1",
-      }).reference_id,
+      }).referenceId,
     ).toBe("return_1")
   })
 
   it("lets SERVICE substitute a justification for a referenceId, but requires one of them", () => {
     expect(() =>
-      buildThamaniStoreCreditOrderInput({
+      buildThamaniStoreCreditOrderChangeInput({
         orderId: "order_1",
         amountMinor: 100,
         reason: "SERVICE",
       }),
     ).toThrow("serviceJustification")
-    const withJustification = buildThamaniStoreCreditOrderInput({
+    const withJustification = buildThamaniStoreCreditOrderChangeInput({
       orderId: "order_1",
       amountMinor: 100,
       reason: "SERVICE",
       serviceJustification: "Late delivery goodwill credit",
     })
-    expect(withJustification.reference_id).toBeNull()
-    expect(withJustification.metadata.service_justification).toBe("Late delivery goodwill credit")
-    const withReferenceId = buildThamaniStoreCreditOrderInput({
+    expect(withJustification.referenceId).toBeNull()
+    expect(withJustification.internalNote).toBe("Late delivery goodwill credit")
+    const withReferenceId = buildThamaniStoreCreditOrderChangeInput({
       orderId: "order_1",
       amountMinor: 100,
       reason: "SERVICE",
       referenceId: "case_42",
     })
-    expect(withReferenceId.reference_id).toBe("case_42")
+    expect(withReferenceId.referenceId).toBe("case_42")
   })
 
-  it("tags every credit line's metadata with its own reason, not a shared default", () => {
-    const refund = buildThamaniStoreCreditOrderInput({
+  it("tags every credit line with its own reason's reference, not a shared default", () => {
+    const refund = buildThamaniStoreCreditOrderChangeInput({
       orderId: "order_1",
       amountMinor: 100,
       reason: "REFUND",
       referenceId: "return_1",
     })
-    const promotional = buildThamaniStoreCreditOrderInput({
+    const promotional = buildThamaniStoreCreditOrderChangeInput({
       orderId: "order_1",
       amountMinor: 100,
       reason: "PROMOTIONAL",
       referenceId: "policy_1",
     })
-    expect(refund.metadata.baobab_store_credit_reason).toBe("REFUND")
-    expect(promotional.metadata.baobab_store_credit_reason).toBe("PROMOTIONAL")
+    expect(refund.reference).toBe(THAMANI_STORE_CREDIT_REASON_CONFIG.REFUND.reference)
+    expect(promotional.reference).toBe(THAMANI_STORE_CREDIT_REASON_CONFIG.PROMOTIONAL.reference)
     expect(refund.reference).not.toBe(promotional.reference)
   })
 

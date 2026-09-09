@@ -4,11 +4,9 @@
  * shipping method, create payment collection, create payment session,
  * complete cart), then issues three real native Order Credit Lines against
  * it — one per Gate 17 Store Credit reason (REFUND, SERVICE, PROMOTIONAL) —
- * via `IOrderModuleService.createOrderCreditLines`, and asserts each
- * produces a distinct, correctly-tagged ERP accounting consequence. See
- * `store-credit-config.ts` for why the module service is used directly
- * rather than either of the two `@medusajs/core-flows` credit-line
- * workflows.
+ * through `issueThamaniStoreCreditWorkflow`
+ * (`src/workflows/thamani-store-credit-issuance.ts`), and asserts each
+ * produces a distinct, correctly-tagged ERP accounting consequence.
  *
  * Medusa provides no way to delete an order, only to cancel one; the order
  * this script completes is cancelled in `finally` so it doesn't linger as
@@ -31,7 +29,6 @@ import type {
   ExecArgs,
   IFulfillmentModuleService,
   IInventoryService,
-  IOrderModuleService,
   IPaymentModuleService,
   IProductModuleService,
   IRegionModuleService,
@@ -43,11 +40,12 @@ import { findByCountryCode, findByMarketKey, findByMetadataKey } from "../baobab
 import { DurableErpIntegrationAdapter, erpProjectionDigest } from "../baobab/erp-integration"
 import type { ErpProjectionCommand } from "../baobab/erp-integration"
 import {
-  buildThamaniStoreCreditOrderInput,
+  buildThamaniStoreCreditOrderChangeInput,
   createThamaniStoreCreditErpProjection,
   THAMANI_STORE_CREDIT_REASON_CONFIG,
   type ThamaniStoreCreditReason,
 } from "../baobab/thamani/store-credit"
+import { issueThamaniStoreCreditWorkflow } from "../workflows/thamani-store-credit-issuance"
 import type ErpIntegrationModuleService from "../modules/erp-integration/service"
 import type ThamaniModuleService from "../modules/thamani/service"
 
@@ -58,7 +56,6 @@ type OrderCreditLine = {
   amount: number
   reference: string | null
   reference_id: string | null
-  metadata: Record<string, unknown> | null
 }
 type OrderWithCreditLines = { id: string; credit_lines?: OrderCreditLine[] }
 
@@ -113,7 +110,6 @@ async function readOrderCreditLines(
       "credit_lines.amount",
       "credit_lines.reference",
       "credit_lines.reference_id",
-      "credit_lines.metadata",
     ],
     filters: { id: [orderId] },
   })
@@ -130,7 +126,6 @@ export default async function regressionThamaniStoreCreditIssuance({
   const inventoryService = container.resolve<IInventoryService>(Modules.INVENTORY)
   const fulfillmentService = container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT)
   const paymentService = container.resolve<IPaymentModuleService>(Modules.PAYMENT)
-  const orderService = container.resolve<IOrderModuleService>(Modules.ORDER)
   const thamani = container.resolve<ThamaniModuleService>("thamani")
   const erp = container.resolve<ErpIntegrationModuleService>("erpIntegration")
 
@@ -257,15 +252,19 @@ export default async function regressionThamaniStoreCreditIssuance({
       },
     ]
     for (const issuance of issuances) {
-      const creditLineInput = buildThamaniStoreCreditOrderInput({
-        orderId: order.id,
-        amountMinor: issuance.amountMinor,
-        reason: issuance.reason,
-        referenceId: issuance.referenceId,
-        serviceJustification:
-          issuance.reason === "SERVICE" ? "Late delivery goodwill credit" : undefined,
+      const { result: issuedCreditLine } = await issueThamaniStoreCreditWorkflow(container).run({
+        input: {
+          orderId: order.id,
+          amountMinor: issuance.amountMinor,
+          reason: issuance.reason,
+          referenceId: issuance.referenceId,
+          serviceJustification:
+            issuance.reason === "SERVICE" ? "Late delivery goodwill credit" : undefined,
+        },
       })
-      await orderService.createOrderCreditLines([creditLineInput])
+      const config = THAMANI_STORE_CREDIT_REASON_CONFIG[issuance.reason]
+      if (issuedCreditLine.reference !== config.reference)
+        throw new Error(`Workflow returned the wrong reference tag for ${issuance.reason}`)
     }
 
     const creditLines = await readOrderCreditLines(container, order.id)
@@ -273,9 +272,7 @@ export default async function regressionThamaniStoreCreditIssuance({
       throw new Error(`Expected 3 order credit lines, found ${creditLines.length}`)
     for (const issuance of issuances) {
       const config = THAMANI_STORE_CREDIT_REASON_CONFIG[issuance.reason]
-      const line = creditLines.find(
-        (candidate) => candidate.metadata?.baobab_store_credit_reason === issuance.reason,
-      )
+      const line = creditLines.find((candidate) => candidate.reference === config.reference)
       if (!line) throw new Error(`Missing order credit line for reason ${issuance.reason}`)
       if (line.reference !== config.reference)
         throw new Error(`Wrong reference tag on ${issuance.reason} credit line`)
@@ -308,7 +305,11 @@ export default async function regressionThamaniStoreCreditIssuance({
 
     let rejectedNonPositiveAmount = false
     try {
-      buildThamaniStoreCreditOrderInput({ orderId: order.id, amountMinor: 0, reason: "SERVICE" })
+      buildThamaniStoreCreditOrderChangeInput({
+        orderId: order.id,
+        amountMinor: 0,
+        reason: "SERVICE",
+      })
     } catch {
       rejectedNonPositiveAmount = true
     }
@@ -316,7 +317,11 @@ export default async function regressionThamaniStoreCreditIssuance({
 
     let rejectedMissingReferenceId = false
     try {
-      buildThamaniStoreCreditOrderInput({ orderId: order.id, amountMinor: 100, reason: "REFUND" })
+      buildThamaniStoreCreditOrderChangeInput({
+        orderId: order.id,
+        amountMinor: 100,
+        reason: "REFUND",
+      })
     } catch {
       rejectedMissingReferenceId = true
     }
@@ -325,7 +330,11 @@ export default async function regressionThamaniStoreCreditIssuance({
 
     let rejectedMissingServiceJustification = false
     try {
-      buildThamaniStoreCreditOrderInput({ orderId: order.id, amountMinor: 100, reason: "SERVICE" })
+      buildThamaniStoreCreditOrderChangeInput({
+        orderId: order.id,
+        amountMinor: 100,
+        reason: "SERVICE",
+      })
     } catch {
       rejectedMissingServiceJustification = true
     }

@@ -7,17 +7,26 @@
  * wallet ledger — "implement only as approved native capability" per the
  * completion plan.
  *
- * Both credit-line workflows in `@medusajs/core-flows`
- * (`createOrderCreditLinesWorkflow`, `createOrderRefundCreditLinesWorkflow`)
- * exist for order-edit/exchange reconciliation: the generic one only
- * accepts a call when the order already has a non-zero pending difference
- * (an edit already in flight), and the refund-specific one isn't part of
- * the package's public export surface in this Medusa version. Neither fits
- * "grant credit against an otherwise-settled order," which is what all
- * three Store Credit reasons need. `IOrderModuleService.createOrderCreditLines`
- * — the module service's own method, part of its published, typed API — has
- * no such restriction and accepts `metadata` directly, so the reason and its
- * trace-back reference travel there rather than through either workflow.
+ * A credit line is only a real, accounted-for native entity when it is
+ * created through Medusa's order-change machinery — `createOrderChange`
+ * (change_type `credit_line`), `addOrderAction` (`CREDIT_LINE_ADD`), then
+ * `confirmOrderChange` — which is what `IOrderModuleService.confirmOrderChange`
+ * actually turns into the persisted `order_credit_line` row, versioned and
+ * tied to an auditable `OrderChange`/`OrderChangeAction` history. Calling
+ * `IOrderModuleService.createOrderCreditLines` directly (the generated
+ * low-level CRUD method) skips all of that: no order-change action, no
+ * order version bump, no accounting history — so `issueThamaniStoreCredit`
+ * (`src/workflows/thamani-store-credit-issuance.ts`) goes through the
+ * order-change path instead. See `issueThamaniStoreCreditWorkflow` for the
+ * actual issuance workflow that wires this into the running application.
+ *
+ * `CREDIT_LINE_ADD`'s own handler (`@medusajs/order`) only ever copies
+ * `amount`, `reference`, and `reference_id` from the order-change action
+ * onto the resulting credit line — no `metadata` field is read from the
+ * action at all, so the reason and its trace-back travel in those two
+ * fields (matching what they're documented for) rather than in metadata. A
+ * SERVICE credit's justification, which has no `reference_id` to attach to,
+ * is instead recorded as the owning `OrderChange`'s own `internal_note`.
  */
 
 export type ThamaniStoreCreditReason = "REFUND" | "SERVICE" | "PROMOTIONAL"
@@ -47,7 +56,7 @@ export const THAMANI_STORE_CREDIT_REASON_CONFIG: Record<
      * the kind of thing a real finance team needs to be able to trace back.
      * SERVICE credits are goodwill judgement calls with no such prior
      * record; a human-readable justification is required in its place (see
-     * `buildThamaniStoreCreditOrderInput`).
+     * `buildThamaniStoreCreditOrderChangeInput`).
      */
     requiresReferenceId: boolean
   }
@@ -77,20 +86,22 @@ export type ThamaniStoreCreditIssuanceInput = {
   referenceId?: string | null
   /** Required for SERVICE in place of a referenceId — a human-readable reason a credit was granted. */
   serviceJustification?: string | null
+  createdBy?: string
 }
 
-/** The shape `IOrderModuleService.createOrderCreditLines` actually accepts. */
-export type ThamaniStoreCreditOrderCreditLineInput = {
-  order_id: string
-  amount: number
+/** The order-change/action fields `issueThamaniStoreCreditWorkflow` needs to issue this credit. */
+export type ThamaniStoreCreditOrderChangeInput = {
+  orderId: string
+  amountMinor: number
   reference: string
-  reference_id: string | null
-  metadata: { baobab_store_credit_reason: ThamaniStoreCreditReason; service_justification?: string }
+  referenceId: string | null
+  internalNote: string | null
+  createdBy?: string
 }
 
-export const buildThamaniStoreCreditOrderInput = (
+export const buildThamaniStoreCreditOrderChangeInput = (
   input: ThamaniStoreCreditIssuanceInput,
-): ThamaniStoreCreditOrderCreditLineInput => {
+): ThamaniStoreCreditOrderChangeInput => {
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0)
     throw new Error("Store credit amount must be a positive integer in minor units")
   const config = THAMANI_STORE_CREDIT_REASON_CONFIG[input.reason]
@@ -101,13 +112,11 @@ export const buildThamaniStoreCreditOrderInput = (
   if (input.reason === "SERVICE" && !input.referenceId && !input.serviceJustification)
     throw new Error("A SERVICE store credit requires a serviceJustification or a referenceId")
   return {
-    order_id: input.orderId,
-    amount: input.amountMinor,
+    orderId: input.orderId,
+    amountMinor: input.amountMinor,
     reference: config.reference,
-    reference_id: input.referenceId ?? null,
-    metadata: {
-      baobab_store_credit_reason: input.reason,
-      ...(input.serviceJustification ? { service_justification: input.serviceJustification } : {}),
-    },
+    referenceId: input.referenceId ?? null,
+    internalNote: input.serviceJustification ?? null,
+    createdBy: input.createdBy,
   }
 }
