@@ -1,5 +1,9 @@
 import type { ExecArgs } from "@medusajs/framework/types"
-import { DurableErpIntegrationAdapter, type ErpProjectionCommand } from "../baobab/erp-integration"
+import {
+  DurableErpIntegrationAdapter,
+  erpProjectionDigest,
+  type ErpProjectionCommand,
+} from "../baobab/erp-integration"
 import {
   createThamaniErpProjection,
   THAMANI_ERP_PROJECTION_KINDS,
@@ -24,7 +28,22 @@ export default async function ({ container }: ExecArgs) {
   const adapter = new DurableErpIntegrationAdapter({
     async findByIdempotencyKey(key) {
       const [item] = await erp.listErpProjections({ source_idempotency_key: key })
-      return item && { id: item.id, commandDigest: item.command_digest }
+      if (!item) return undefined
+      return {
+        id: item.id,
+        commandDigest:
+          item.command_digest ??
+          erpProjectionDigest({
+            kind: item.kind,
+            commerceReference: item.commerce_reference,
+            canonicalEntityId: item.canonical_entity_id,
+            legalSellerKey: item.legal_seller_key,
+            marketKey: item.market_key,
+            payload: item.payload as Record<string, unknown>,
+            idempotencyKey: item.source_idempotency_key,
+            correlationId: item.correlation_id,
+          }),
+      }
     },
     async create(command: ErpProjectionCommand & { commandDigest: string }) {
       return erp.createErpProjections({

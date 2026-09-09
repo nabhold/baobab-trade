@@ -1,6 +1,6 @@
 import type { ErpProjectionCommand, ProjectionKind } from "../../erp-integration"
 
-export const THAMANI_ERP_PROJECTION_KINDS: readonly ProjectionKind[] = [
+export const THAMANI_ERP_PROJECTION_KINDS = [
   "PRODUCT",
   "SUPPLIER",
   "WAREHOUSE",
@@ -8,7 +8,7 @@ export const THAMANI_ERP_PROJECTION_KINDS: readonly ProjectionKind[] = [
   "SHIPMENT",
   "PAYMENT",
   "RETURN_REFUND",
-]
+] as const satisfies readonly ProjectionKind[]
 
 export type ThamaniErpProjectionInput = {
   kind: (typeof THAMANI_ERP_PROJECTION_KINDS)[number]

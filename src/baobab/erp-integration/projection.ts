@@ -104,7 +104,7 @@ export const reconcileErpProjection = (input: {
 }
 
 export interface ErpProjectionRepository {
-  findByIdempotencyKey(key: string): Promise<{ id: string; commandDigest?: string } | undefined>
+  findByIdempotencyKey(key: string): Promise<{ id: string; commandDigest: string } | undefined>
   create(command: ErpProjectionCommand & { commandDigest: string }): Promise<{ id: string }>
 }
 export interface ErpIntegrationPort {
@@ -122,7 +122,7 @@ export class DurableErpIntegrationAdapter implements ErpIntegrationPort {
     const commandDigest = erpProjectionDigest(command)
     const existing = await this.repository.findByIdempotencyKey(command.idempotencyKey)
     if (existing) {
-      if (existing.commandDigest && existing.commandDigest !== commandDigest)
+      if (existing.commandDigest !== commandDigest)
         throw new Error("ERP idempotency key reused with different projection content")
       return existing
     }
