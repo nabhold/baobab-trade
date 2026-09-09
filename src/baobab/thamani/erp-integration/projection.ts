@@ -8,6 +8,7 @@ export const THAMANI_ERP_PROJECTION_KINDS = [
   "SHIPMENT",
   "PAYMENT",
   "RETURN_REFUND",
+  "CREDIT_LINE",
 ] as const satisfies readonly ProjectionKind[]
 
 export type ThamaniErpProjectionInput = {

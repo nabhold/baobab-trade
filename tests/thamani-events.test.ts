@@ -33,6 +33,7 @@ type Kind =
   | "SHIPMENT"
   | "PAYMENT"
   | "RETURN_REFUND"
+  | "CREDIT_LINE"
 const eventFor = (kind: Kind, suffix: number) =>
   thamaniEvents.createThamaniProjectionEvent(context, {
     id: `22222222-2222-4222-8222-${String(suffix).padStart(12, "0")}`,
@@ -131,7 +132,7 @@ describe("Thamani Gate 16 events", () => {
     expect(migration).toContain("idempotency key reused with different envelope")
     expect(migration).not.toContain("baobab_market_key: config.marketKey")
   })
-  it("uses seven specific event facts with complete legal scope and causal lineage", () => {
+  it("uses eight specific event facts with complete legal scope and causal lineage", () => {
     const kinds: Kind[] = [
       "PRODUCT",
       "SUPPLIER",
@@ -140,9 +141,10 @@ describe("Thamani Gate 16 events", () => {
       "SHIPMENT",
       "PAYMENT",
       "RETURN_REFUND",
+      "CREDIT_LINE",
     ]
     const events = kinds.map((kind, index) => eventFor(kind, index + 1))
-    expect(new Set(events.map((event) => event.type))).toHaveLength(7)
+    expect(new Set(events.map((event) => event.type))).toHaveLength(8)
     expect(events.map((event) => event.type)).toContain(
       THAMANI_EVENT_TYPES.paymentProjectionRequested,
     )

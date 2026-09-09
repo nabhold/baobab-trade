@@ -22,15 +22,15 @@ export default async function ({ container }: ExecArgs) {
     Object.values(THAMANI_EVENT_TYPES).filter((type) => !type.includes("reconciliation-required")),
   )
   const projectionRows = rows.filter((row) => expectedTypes.has(row.event_type as never))
-  if (projectionRows.length !== 7)
+  if (projectionRows.length !== 8)
     throw new Error(
-      `Expected exactly seven Thamani projection events, found ${projectionRows.length}`,
+      `Expected exactly eight Thamani projection events, found ${projectionRows.length}`,
     )
-  if (new Set(projectionRows.map((row) => row.event_type)).size !== 7)
+  if (new Set(projectionRows.map((row) => row.event_type)).size !== 8)
     throw new Error("Thamani projection event families are incomplete")
   if (
-    new Set(projectionRows.map((row) => row.event_id)).size !== 7 ||
-    new Set(projectionRows.map((row) => row.idempotency_key)).size !== 7
+    new Set(projectionRows.map((row) => row.event_id)).size !== 8 ||
+    new Set(projectionRows.map((row) => row.idempotency_key)).size !== 8
   )
     throw new Error("Thamani event or idempotency identity is not unique")
 
@@ -84,6 +84,6 @@ export default async function ({ container }: ExecArgs) {
   container
     .resolve("logger")
     .info(
-      "Verified Gate 16 Thamani legal-entity isolation, seven atomic projection events, privacy, receipts, and reconciliation",
+      "Verified Gate 16 Thamani legal-entity isolation, eight atomic projection events, privacy, receipts, and reconciliation",
     )
 }

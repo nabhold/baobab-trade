@@ -29,6 +29,10 @@ flowchart TD
   G --> H
 ```
 
-Seven specific facts cover product, supplier, warehouse, order, shipment, payment, and return/refund projections. Events carry references and committed facts, never customer profiles, addresses, credentials, card data, or raw provider payloads. Global ordering is not assumed; correlation, causation, canonical aggregate identity, and source version provide lineage.
+Eight specific facts cover product, supplier, warehouse, order, shipment, payment, return/refund, and store credit projections (`CREDIT_LINE`, added by Gate 17). Events carry references and committed facts, never customer profiles, addresses, credentials, card data, or raw provider payloads. Global ordering is not assumed; correlation, causation, canonical aggregate identity, and source version provide lineage.
 
 Delivery is at least once. Dispatch uses bounded batches, leases, exponential backoff, a maximum attempt count, and an inspectable dead-letter state. Material consumers persist the side effect and receipt atomically and deduplicate by consumer plus event ID. Dead letters do not rewrite Commerce or ERP state; authorised recovery creates a reconciled operational action.
+
+## Store credit (Gate 17)
+
+Medusa has no persistent customer-wallet primitive; Store Credit is implemented as native Order Credit Lines (`IOrderModuleService.createOrderCreditLines`), tagged with one of three reasons — REFUND, SERVICE, PROMOTIONAL (`src/baobab/thamani/store-credit/`) — each carrying its own ERP financial consequence (`AR_CREDIT_MEMO`, `CUSTOMER_SERVICE_EXPENSE`, `MARKETING_EXPENSE` respectively), derived from the reason rather than left to the caller. A REFUND or PROMOTIONAL credit must trace back to its source (a return/cancellation, or an approved campaign policy) via `referenceId`; a SERVICE credit substitutes a human-readable justification when no such prior record exists. Each issuance projects a `CREDIT_LINE` ERP fact through the same outbox pipeline as the other seven facts.

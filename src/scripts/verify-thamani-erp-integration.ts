@@ -101,6 +101,6 @@ export default async function ({ container }: ExecArgs) {
   container
     .resolve("logger")
     .info(
-      "Verified Thamani Gate 15 canonical mappings, seven projection families, isolation, replay, and collision rejection",
+      "Verified Thamani Gate 15 canonical mappings, eight projection families, isolation, replay, and collision rejection",
     )
 }

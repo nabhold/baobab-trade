@@ -17,6 +17,7 @@ export type ProjectionKind =
   | "SHIPMENT"
   | "PAYMENT"
   | "RETURN_REFUND"
+  | "CREDIT_LINE"
 export type ProjectionStatus =
   | "PENDING"
   | "PUBLISHED"

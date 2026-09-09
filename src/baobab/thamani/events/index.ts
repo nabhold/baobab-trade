@@ -15,6 +15,7 @@ const EVENT_TYPE_BY_KIND = {
   SHIPMENT: THAMANI_EVENT_TYPES.shipmentProjectionRequested,
   PAYMENT: THAMANI_EVENT_TYPES.paymentProjectionRequested,
   RETURN_REFUND: THAMANI_EVENT_TYPES.returnRefundProjectionRequested,
+  CREDIT_LINE: THAMANI_EVENT_TYPES.creditLineProjectionRequested,
 } satisfies Record<ThamaniProjectionKind, string>
 
 export const createThamaniProjectionEvent = (
