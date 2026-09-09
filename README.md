@@ -211,6 +211,14 @@ order, shipment, payment and return/refund projections. Run
 `npm run verify:thamani-erp-integration`; see
 `docs/architecture/thamani-erp-integration.md`.
 
+Gate 16 makes those seven projection families durable canonical facts. A
+PostgreSQL trigger persists each Thamani ERP projection and its outbox envelope
+in one transaction, with explicit Tenant, owning legal entity, Digital Estate,
+Market and legal-seller scope. At-least-once dispatch, bounded retry,
+dead-letter handling, consumer receipts, replay collision rejection and
+reconciliation are verified by `npm run verify:thamani-events`; see
+`docs/architecture/thamani-events-outbox.md`.
+
 ## Repository layout
 
 - `src/api` — Medusa API extensions.
@@ -224,7 +232,7 @@ order, shipment, payment and return/refund projections. Run
 - `src/baobab/inventory` — inventory configuration, availability port, and reconciliation policy.
 - `src/baobab/payments` — payment policy, orchestration port, lifecycle, and ERP reconciliation.
 - `src/baobab/fulfilment` — fulfilment policy, provider port, shipment metadata, and reconciliation.
-- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, pricing-decision, promotion, and inventory definitions.
+- `src/baobab/thamani` — Thamani B2C consumer policy, catalogue, supplier, search-projection, pricing, promotion, inventory, ERP, and legally scoped event definitions.
 - `src/baobab/tax` — contextual tax policy, effective-dated provider, and reconciliation.
 - `src/baobab/trade-readiness` — cross-border metadata and compliance-provider boundary.
 - `src/baobab/erp-integration` — durable ERP projection and reconciliation policy.

@@ -51,6 +51,8 @@ export default async function ({ container }: ExecArgs) {
         canonical_entity_id: command.canonicalEntityId,
         legal_seller_key: command.legalSellerKey,
         market_key: command.marketKey,
+        owner_legal_entity_id: "canonical:legal-entity:thamani",
+        digital_estate: THAMANI_DIGITAL_ESTATE_CANONICAL_ID,
         payload: command.payload,
         status: "PENDING",
         source_idempotency_key: command.idempotencyKey,

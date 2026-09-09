@@ -17,6 +17,8 @@ const ErpProjection = model.define(
     canonical_entity_id: model.text(),
     legal_seller_key: model.text(),
     market_key: model.text(),
+    owner_legal_entity_id: model.text().index().nullable(),
+    digital_estate: model.text().index().nullable(),
     payload: model.json(),
     status: model
       .enum(["PENDING", "PUBLISHED", "ACKNOWLEDGED", "FAILED", "RECONCILIATION_REQUIRED"])

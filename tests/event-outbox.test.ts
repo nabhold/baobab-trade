@@ -65,7 +65,10 @@ class MemoryOutbox implements OutboxRepository {
       .filter((x) => ["PENDING", "RETRY"].includes(x.status) && x.nextAttemptAt <= now)
       .slice(0, limit)
   }
-  async markPublishing(id: string, attemptCount: number, leaseExpiresAt: Date) {
+  async claim(id: string, now: Date, attemptCount: number, leaseExpiresAt: Date) {
+    const current = this.records.find((item) => item.id === id)
+    if (!current || !["PENDING", "RETRY"].includes(current.status) || current.nextAttemptAt > now)
+      return undefined
     return this.patch(id, { status: "PUBLISHING", attemptCount, leaseExpiresAt })
   }
   async markPublished(id: string, publishedAt: Date) {

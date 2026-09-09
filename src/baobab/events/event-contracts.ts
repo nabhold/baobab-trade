@@ -176,6 +176,39 @@ export const ERP_INTEGRATION_EVENT_TYPES = {
   reconciliationRequired: "com.nabhold.commerce.erp-integration.reconciliation-required.v1",
 } as const
 
+export const THAMANI_EVENT_TYPES = {
+  productProjectionRequested: "com.nabhold.commerce.thamani-product.projection-requested.v1",
+  supplierProjectionRequested: "com.nabhold.commerce.thamani-supplier.projection-requested.v1",
+  warehouseProjectionRequested: "com.nabhold.commerce.thamani-warehouse.projection-requested.v1",
+  orderProjectionRequested: "com.nabhold.commerce.thamani-order.projection-requested.v1",
+  shipmentProjectionRequested: "com.nabhold.commerce.thamani-shipment.projection-requested.v1",
+  paymentProjectionRequested: "com.nabhold.commerce.thamani-payment.projection-requested.v1",
+  returnRefundProjectionRequested:
+    "com.nabhold.commerce.thamani-return-refund.projection-requested.v1",
+  reconciliationRequired: "com.nabhold.commerce.thamani.reconciliation-required.v1",
+} as const
+
+export type ThamaniProjectionKind =
+  | "PRODUCT"
+  | "SUPPLIER"
+  | "WAREHOUSE"
+  | "ORDER"
+  | "SHIPMENT"
+  | "PAYMENT"
+  | "RETURN_REFUND"
+
+export type ThamaniProjectionEventPayload = {
+  owner_legal_entity_id: "canonical:legal-entity:thamani"
+  digital_estate: "estate:thamani-b2c"
+  market_key: "thamani_ug" | "thamani_za"
+  legal_seller_key: "thamani-uganda" | "thamani-south-africa"
+  canonical_entity_id: string
+  commerce_reference: string
+  projection_kind: ThamaniProjectionKind
+  projection_status: "PENDING" | "PROJECTED" | "RECONCILIATION_REQUIRED"
+  source_version: number
+}
+
 export type ErpIntegrationEventPayload = {
   canonical_entity_id: string
   commerce_reference: string
