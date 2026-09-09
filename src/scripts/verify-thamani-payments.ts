@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
-import type { ExecArgs } from "@medusajs/framework/types"
+import type { ExecArgs, ILockingModule } from "@medusajs/framework/types"
+import { Modules } from "@medusajs/framework/utils"
 import {
   MedusaPaymentOrchestrationAdapter,
   PaymentBridgeRecordAdapter,
@@ -16,6 +17,7 @@ import type PaymentBridgeModuleService from "../modules/payment-bridge/service"
 
 export default async function verifyThamaniPayments({ container }: ExecArgs): Promise<void> {
   const bridge = container.resolve<PaymentBridgeModuleService>("paymentBridge")
+  const locking = container.resolve<ILockingModule>(Modules.LOCKING)
   const stored = await bridge.listPaymentPolicyBindings({
     market_key: THAMANI_PAYMENT_POLICIES.map((policy) => policy.marketKey),
   })
@@ -26,7 +28,9 @@ export default async function verifyThamaniPayments({ container }: ExecArgs): Pr
   if (ug.allowedTerms.some((term) => term !== "PREPAID"))
     throw new Error("Thamani B2C must not expose invoice terms")
   const provider = resolvePaymentProvider(ug, "SELECTED_PSP", "UGX")
-  const adapter = new MedusaPaymentOrchestrationAdapter(new PaymentBridgeRecordAdapter(bridge))
+  const adapter = new MedusaPaymentOrchestrationAdapter(
+    new PaymentBridgeRecordAdapter(bridge, locking),
+  )
   let payment = await adapter.initiate({
     paymentReference: "thamani-gate11-payment-ug",
     orderReference: "thamani-gate11-order-ug",

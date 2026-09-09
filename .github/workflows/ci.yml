@@ -117,6 +117,9 @@ jobs:
       - name: Verify Gate 8 payment lifecycle and ERP reconciliation
         run: npm run verify:payments
 
+      - name: Regression — payment initiate()/transition() race safety under concurrent execution (mutates this disposable database only)
+        run: npm run regression:payment-transition-concurrency
+
       - name: Bootstrap Gate 9 fulfilment policies
         run: npm run bootstrap:fulfilment
 

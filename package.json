@@ -39,6 +39,7 @@
     "verify:catalogue": "medusa exec ./src/scripts/verify-catalogue.ts",
     "verify:inventory": "medusa exec ./src/scripts/verify-inventory.ts",
     "verify:payments": "medusa exec ./src/scripts/verify-payments.ts",
+    "regression:payment-transition-concurrency": "medusa exec ./src/scripts/regression-payment-transition-concurrency.ts",
     "verify:fulfilment": "medusa exec ./src/scripts/verify-fulfilment.ts",
     "verify:thamani-market": "medusa exec ./src/scripts/verify-thamani-market.ts",
     "verify:thamani-catalogue": "medusa exec ./src/scripts/verify-thamani-catalogue.ts",
