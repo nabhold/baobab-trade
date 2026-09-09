@@ -22,6 +22,9 @@ const transaction: CrossBorderTransactionMetadata = {
     {
       canonicalProductKey: "coffee",
       hsClassificationReference: "HS-0901.11",
+      hsClassificationStatus: "VERIFIED",
+      customsTariffReference: "customs-tariff",
+      landedCostReference: "landed-cost",
       originCountry: "UG",
       tradeUom: "BAG",
       quantity: 1,

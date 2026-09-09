@@ -207,6 +207,12 @@ jobs:
       - name: Verify Thamani Gate 13 inclusive tax, provenance, and reconciliation
         run: npm run verify:thamani-tax
 
+      - name: Bootstrap Thamani Gate 14 product trade profiles
+        run: npm run bootstrap:thamani-trade-readiness
+
+      - name: Verify Thamani Gate 14 fail-closed cross-border readiness
+        run: npm run verify:thamani-trade-readiness
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

@@ -28,6 +28,9 @@ export default async function ({ container }: ExecArgs) {
       {
         canonicalProductKey: "ug-arabica-green-aa",
         hsClassificationReference: "HS-0901.11",
+        hsClassificationStatus: "VERIFIED",
+        customsTariffReference: "gate11:customs-tariff",
+        landedCostReference: "gate11:landed-cost",
         originCountry: "UG",
         originRegion: "Mount Elgon",
         tradeUom: "BAG",

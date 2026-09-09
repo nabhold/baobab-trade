@@ -55,6 +55,8 @@ export class ProjectedTradeComplianceAdapter implements TradeCompliancePort {
       reasons.push("INCOTERM_REVIEW_REQUIRED")
     if (transaction.lines.some((line) => !policy.permittedTradeUoms.includes(line.tradeUom)))
       reasons.push("TRADE_UOM_REVIEW_REQUIRED")
+    if (transaction.lines.some((line) => line.hsClassificationStatus !== "VERIFIED"))
+      reasons.push("HS_CLASSIFICATION_UNVERIFIED")
     return {
       decisionReference: `${transaction.transactionReference}:${policy.policyVersion}`,
       status: reasons.length ? "REVIEW_REQUIRED" : "APPROVED",
