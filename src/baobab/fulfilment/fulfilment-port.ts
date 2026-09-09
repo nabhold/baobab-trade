@@ -28,7 +28,8 @@ export type ShipmentMetadata = {
 export type RequestFulfilmentCommand = {
   fulfilmentReference: string
   orderReference: string
-  organisationId: string
+  organisationId?: string
+  customerReference?: string
   marketKey: string
   legalSellerKey: string
   sourceLocationKey: string
@@ -92,6 +93,8 @@ const TRANSITIONS: Record<FulfilmentStatus, readonly FulfilmentStatus[]> = {
 }
 
 const validateShipment = (command: RequestFulfilmentCommand) => {
+  if (Boolean(command.organisationId) === Boolean(command.customerReference))
+    throw new Error("Fulfilment requires exactly one B2B organisation or B2C customer reference")
   if (
     !(command.shipment.grossWeightKg > 0) ||
     !Number.isInteger(command.shipment.packageCount) ||
