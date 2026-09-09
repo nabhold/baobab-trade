@@ -126,6 +126,9 @@ jobs:
       - name: Verify Gate 9 fulfilment, tracking, and reconciliation
         run: npm run verify:fulfilment
 
+      - name: Regression — fulfilment request()/transition() race safety and per-fulfilment idempotency scoping (mutates this disposable database only)
+        run: npm run regression:fulfilment-transition-concurrency
+
       - name: Bootstrap Gate 10 tax contexts
         run: npm run bootstrap:tax
 
