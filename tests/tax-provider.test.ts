@@ -33,6 +33,7 @@ const request: TaxDeterminationRequest = {
   transactionType: "GOODS",
   currency: "UGX",
   taxableBasisMinor: 101,
+  priceDisplayMode: "TAX_EXCLUSIVE",
   effectiveAt: new Date("2026-06-01"),
   idempotencyKey: "idem-1",
   correlationId: "corr-1",

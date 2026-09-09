@@ -33,7 +33,7 @@ export type TaxDeterminationRequest = {
   transactionType: TransactionType
   currency: string
   taxableBasisMinor: number
-  priceDisplayMode?: "TAX_INCLUSIVE" | "TAX_EXCLUSIVE"
+  priceDisplayMode: "TAX_INCLUSIVE" | "TAX_EXCLUSIVE"
   effectiveAt: Date
   idempotencyKey: string
   correlationId: string
@@ -91,7 +91,7 @@ export class EffectiveDatedTaxProviderAdapter implements TaxDeterminationPort {
       throw new Error("Tax provider returned a rule outside the requested context")
     if (["ZERO_RATED", "EXEMPT", "REVERSE_CHARGE"].includes(rule.treatment) && !rule.legalReason)
       throw new Error("Protected zero-tax treatment requires legal reason provenance")
-    const priceDisplayMode = request.priceDisplayMode ?? "TAX_EXCLUSIVE"
+    const priceDisplayMode = request.priceDisplayMode
     const taxAmountMinor =
       rule.treatment !== "STANDARD"
         ? 0

@@ -15,9 +15,21 @@ export class Migration20260909050000 extends Migration {
     this.addSql(
       'alter table "tax_determination" add column if not exists "gross_amount_minor" bigint not null default 0;',
     )
+    this.addSql(
+      'alter table "tax_determination" add column if not exists "raw_net_amount_minor" jsonb null;',
+    )
+    this.addSql(
+      'alter table "tax_determination" add column if not exists "raw_gross_amount_minor" jsonb null;',
+    )
     this.addSql(`update "tax_determination" set
       "net_amount_minor" = "taxable_basis_minor",
-      "gross_amount_minor" = "taxable_basis_minor" + "tax_amount_minor";`)
+      "gross_amount_minor" = "taxable_basis_minor" + "tax_amount_minor",
+      "raw_net_amount_minor" = "raw_taxable_basis_minor",
+      "raw_gross_amount_minor" = to_jsonb(("taxable_basis_minor" + "tax_amount_minor")::text);`)
+    this.addSql('alter table "tax_determination" alter column "raw_net_amount_minor" set not null;')
+    this.addSql(
+      'alter table "tax_determination" alter column "raw_gross_amount_minor" set not null;',
+    )
     this.addSql('alter table "tax_determination" alter column "net_amount_minor" drop default;')
     this.addSql('alter table "tax_determination" alter column "gross_amount_minor" drop default;')
     this
@@ -59,7 +71,9 @@ export class Migration20260909050000 extends Migration {
       .addSql(`update "tax_determination" set "organisation_id" = 'legacy-b2c:' || "customer_reference"
       where "organisation_id" is null;`)
     this.addSql('alter table "tax_determination" drop column if exists "gross_amount_minor";')
+    this.addSql('alter table "tax_determination" drop column if exists "raw_gross_amount_minor";')
     this.addSql('alter table "tax_determination" drop column if exists "net_amount_minor";')
+    this.addSql('alter table "tax_determination" drop column if exists "raw_net_amount_minor";')
     this.addSql('alter table "tax_determination" drop column if exists "price_display_mode";')
     this.addSql('alter table "tax_determination" drop column if exists "customer_reference";')
     this.addSql('alter table "tax_determination" alter column "organisation_id" set not null;')
