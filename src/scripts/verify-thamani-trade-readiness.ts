@@ -50,27 +50,39 @@ export default async function ({ container }: ExecArgs) {
     idempotencyKey: "thamani:gate14:ug-za",
     correlationId: "thamani-gate14-verification",
   }
-  const port = new ProjectedTradeComplianceAdapter({
-    async listPolicies(originCountry, destinationCountry) {
-      return (
-        await service.listTradeLanePolicies({
-          origin_country: originCountry,
-          destination_country: destinationCountry,
-          status: "ACTIVE",
-        })
-      ).map((lane) => ({
-        policyReference: lane.policy_reference,
-        policyVersion: lane.policy_version,
-        originCountry: lane.origin_country,
-        destinationCountry: lane.destination_country,
-        permittedIncoterms: lane.permitted_incoterms as string[],
-        permittedTradeUoms: lane.permitted_trade_uoms as string[],
-        effectiveFrom: lane.effective_from,
-        effectiveUntil: lane.effective_until,
-        source: lane.source,
-      }))
+  const port = new ProjectedTradeComplianceAdapter(
+    {
+      async listPolicies(originCountry, destinationCountry) {
+        return (
+          await service.listTradeLanePolicies({
+            origin_country: originCountry,
+            destination_country: destinationCountry,
+          })
+        ).map((lane) => ({
+          policyReference: lane.policy_reference,
+          policyVersion: lane.policy_version,
+          originCountry: lane.origin_country,
+          destinationCountry: lane.destination_country,
+          permittedIncoterms: lane.permitted_incoterms as string[],
+          permittedTradeUoms: lane.permitted_trade_uoms as string[],
+          effectiveFrom: lane.effective_from,
+          effectiveUntil: lane.effective_until,
+          source: lane.source,
+        }))
+      },
     },
-  })
+    {
+      async isVerified({ canonicalProductKey, marketKey, hsClassificationReference, effectiveAt }) {
+        const [reviewed] = await service.listThamaniTradeProfiles({
+          canonical_product_key: canonicalProductKey,
+          market_key: marketKey,
+          hs_classification_reference: hsClassificationReference,
+          hs_classification_status: "VERIFIED",
+        })
+        return Boolean(reviewed?.reviewed_at && reviewed.reviewed_at <= effectiveAt)
+      },
+    },
+  )
   const decision = await port.evaluate(transaction, new Date("2026-09-09T12:00:00Z"))
   if (
     decision.status !== "REVIEW_REQUIRED" ||

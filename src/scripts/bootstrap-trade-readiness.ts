@@ -14,7 +14,11 @@ export default async function ({ container }: ExecArgs) {
         candidate.policy_reference !== lane.policyReference ||
         candidate.policy_version !== lane.policyVersion,
     ))
-      await service.updateTradeLanePolicies({ id: superseded.id, status: "SUPERSEDED" })
+      await service.updateTradeLanePolicies({
+        id: superseded.id,
+        effective_until: lane.effectiveFrom,
+        status: "SUPERSEDED",
+      })
     const [existing] = await service.listTradeLanePolicies({
       policy_reference: lane.policyReference,
       policy_version: lane.policyVersion,

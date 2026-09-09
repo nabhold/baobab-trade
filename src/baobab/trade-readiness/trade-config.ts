@@ -7,7 +7,7 @@ export const ZURIBEANS_TRADE_LANES: readonly TradeLanePolicy[] = [
     destinationCountry: "ZA",
     permittedIncoterms: ["FCA", "FOB", "CFR", "CIF", "DAP", "DDP"],
     permittedTradeUoms: ["BAG", "CARTON", "EACH"],
-    effectiveFrom: new Date("2026-01-01T00:00:00Z"),
+    effectiveFrom: new Date("2026-09-09T00:00:00Z"),
     source: "GATE14_CONFIGURATION_NOT_CUSTOMS_AUTHORITY",
   },
   {
@@ -17,7 +17,7 @@ export const ZURIBEANS_TRADE_LANES: readonly TradeLanePolicy[] = [
     destinationCountry: "UG",
     permittedIncoterms: ["FCA", "FOB", "CFR", "CIF", "DAP", "DDP"],
     permittedTradeUoms: ["BAG", "CARTON", "EACH"],
-    effectiveFrom: new Date("2026-01-01T00:00:00Z"),
+    effectiveFrom: new Date("2026-09-09T00:00:00Z"),
     source: "GATE14_CONFIGURATION_NOT_CUSTOMS_AUTHORITY",
   },
 ] as const

@@ -61,17 +61,24 @@ describe("Thamani Gate 14 trade readiness", () => {
       idempotencyKey: "test",
       correlationId: "test",
     }
-    const port = new ProjectedTradeComplianceAdapter({
-      async listPolicies(origin, destination) {
-        return ZURIBEANS_TRADE_LANES.filter(
-          (lane) => lane.originCountry === origin && lane.destinationCountry === destination,
-        ).map((lane) => ({
-          ...lane,
-          permittedIncoterms: [...lane.permittedIncoterms],
-          permittedTradeUoms: [...lane.permittedTradeUoms],
-        }))
+    const port = new ProjectedTradeComplianceAdapter(
+      {
+        async listPolicies(origin, destination) {
+          return ZURIBEANS_TRADE_LANES.filter(
+            (lane) => lane.originCountry === origin && lane.destinationCountry === destination,
+          ).map((lane) => ({
+            ...lane,
+            permittedIncoterms: [...lane.permittedIncoterms],
+            permittedTradeUoms: [...lane.permittedTradeUoms],
+          }))
+        },
       },
-    })
+      {
+        async isVerified() {
+          return false
+        },
+      },
+    )
     const decision = await port.evaluate(transaction, new Date("2026-09-09"))
     expect(decision).toMatchObject({
       status: "REVIEW_REQUIRED",
