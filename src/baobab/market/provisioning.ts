@@ -186,7 +186,6 @@ export async function bootstrapMarket(
   // Stock location.
   const existingStockLocations = await stockLocationService.listStockLocations({})
   let stockLocation = findByMarketKey(existingStockLocations, config.marketKey)
-  let stockLocationCreated = false
   if (!stockLocation) {
     stockLocation = await stockLocationService.createStockLocations({
       name: config.stockLocation.name,
@@ -197,7 +196,6 @@ export async function bootstrapMarket(
       },
       metadata: stockLocationMappingTag(config.marketKey),
     })
-    stockLocationCreated = true
     log("created stock location", { stockLocationId: stockLocation.id })
   } else {
     log("stock location already provisioned", { stockLocationId: stockLocation.id })
@@ -328,37 +326,49 @@ export async function bootstrapMarket(
     log("shipping context already provisioned", { fulfillmentSetId: fulfillmentSet.id })
   }
 
-  if (stockLocationCreated) {
-    await linkSalesChannelsToStockLocationWorkflow(container).run({
-      input: { id: stockLocation.id, add: [salesChannel.id], remove: [] },
-    })
-    await remoteLink.create(
-      config.shipping.providerIds.map((providerId) => ({
-        [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
-        [Modules.FULFILLMENT]: { fulfillment_provider_id: providerId },
-      })),
-    )
-    log("bound stock location to Sales Channel and fulfillment providers")
-  }
+  // Reconciled on every run, not just at stock-location creation:
+  // `remoteLink.create` is safe to call again for a link that already
+  // exists (confirmed against a live database — it's the same call
+  // Medusa's own "Manage Sales Channels" Admin API route makes on every
+  // save, whether or not the selection actually changed), so this never
+  // needs a "did I already do this" guard. Gating it on `stockLocationCreated`
+  // previously meant a bootstrap run that failed after creating the stock
+  // location but before reaching this point would have its retry find the
+  // stock location already there, permanently skip re-linking, and then
+  // fail below with "Providers (...) are not enabled for the service
+  // location" — with no way to self-heal short of a manual fix.
+  await linkSalesChannelsToStockLocationWorkflow(container).run({
+    input: { id: stockLocation.id, add: [salesChannel.id], remove: [] },
+  })
+  await remoteLink.create(
+    config.shipping.providerIds.map((providerId) => ({
+      [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
+      [Modules.FULFILLMENT]: { fulfillment_provider_id: providerId },
+    })),
+  )
+  log("bound stock location to Sales Channel and fulfillment providers")
 
   // Shipping option: `completeCartWorkflow` cannot succeed without a real,
   // priced option on the service zone above — see the doc comment on
   // `MarketBootstrapConfig.shipping.shippingOption` for why this can't be a
-  // sourced rate yet. Idempotent by service zone (not by name: every Market's
-  // service zone is already guaranteed unique by construction above, whereas
-  // a name collision between Markets would otherwise make this a no-op for
-  // every Market but the first). Must run after the stock-location-to-
-  // fulfillment-provider binding above: Medusa's own
-  // `createShippingOptionsWorkflow` validates the option's provider is
-  // already enabled for the option's service location, so creating it any
-  // earlier fails with "Providers (...) are not enabled for the service
-  // location".
+  // sourced rate yet. Idempotency checks for THIS Market's configured option
+  // specifically (by name, scoped to the service zone) rather than "does the
+  // zone already have any option at all": a zone that already carries a
+  // different option — a different shipping profile, or priced only in a
+  // different currency — would otherwise look "already provisioned" while
+  // still leaving this Market's own checkout unable to find a usable rate.
+  // Must run after the stock-location-to-fulfillment-provider binding above:
+  // Medusa's own `createShippingOptionsWorkflow` validates the option's
+  // provider is already enabled for the option's service location, so
+  // creating it any earlier fails with "Providers (...) are not enabled for
+  // the service location".
   const [serviceZone] = await fulfillmentService.listServiceZones({
     name: config.shipping.serviceZone.name,
   })
   if (!serviceZone)
     throw new Error(`Service zone "${config.shipping.serviceZone.name}" was not provisioned`)
   const [existingShippingOption] = await fulfillmentService.listShippingOptions({
+    name: config.shipping.shippingOption.name,
     service_zone: { id: serviceZone.id },
   })
   if (!existingShippingOption) {
