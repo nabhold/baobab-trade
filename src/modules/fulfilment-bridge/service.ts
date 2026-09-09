@@ -5,6 +5,7 @@ import FulfilmentReconciliation from "./models/fulfilment-reconciliation"
 import FulfilmentStatusTransition from "./models/fulfilment-status-transition"
 import FulfilmentAllocation from "./models/fulfilment-allocation"
 import CommerceReturn from "./models/commerce-return"
+import FulfilmentOrderLine from "./models/fulfilment-order-line"
 class FulfilmentBridgeModuleService extends MedusaService({
   CommerceFulfilment,
   FulfilmentPolicyBinding,
@@ -12,5 +13,6 @@ class FulfilmentBridgeModuleService extends MedusaService({
   FulfilmentStatusTransition,
   FulfilmentAllocation,
   CommerceReturn,
+  FulfilmentOrderLine,
 }) {}
 export default FulfilmentBridgeModuleService

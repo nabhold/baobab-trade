@@ -46,18 +46,30 @@ export default async function ({ container }: ExecArgs) {
     { orderLineReference: "line-1", sourceLocationKey: "TH-UG-EBB-01", quantity: 1 },
   ] as const
   assertCompleteAllocation({ "line-1": 2 }, allocations)
-  for (const [index, allocation] of allocations.entries()) {
-    const key = `thamani:gate12:allocation:${index}`
-    const [existing] = await bridge.listFulfilmentAllocations({ source_idempotency_key: key })
-    if (!existing)
-      await bridge.createFulfilmentAllocations({
+  const [existingLine] = await bridge.listFulfilmentOrderLines({
+    fulfilment_id: fulfilment.id,
+    order_line_reference: "line-1",
+  })
+  if (!existingLine)
+    await bridge.createFulfilmentOrderLines({
+      fulfilment_id: fulfilment.id,
+      order_line_reference: "line-1",
+      fulfilled_quantity: 2,
+    })
+  const existingAllocations = await bridge.listFulfilmentAllocations({
+    fulfilment_id: fulfilment.id,
+    order_line_reference: "line-1",
+  })
+  if (!existingAllocations.length)
+    await bridge.createFulfilmentAllocations(
+      allocations.map((allocation, index) => ({
         fulfilment_id: fulfilment.id,
         order_line_reference: allocation.orderLineReference,
         source_location_key: allocation.sourceLocationKey,
         quantity: allocation.quantity,
-        source_idempotency_key: key,
-      })
-  }
+        source_idempotency_key: `thamani:gate12:allocation:${index}`,
+      })),
+    )
   for (const [from, to] of [
     ["REQUESTED", "ACCEPTED"],
     ["ACCEPTED", "ALLOCATED"],
