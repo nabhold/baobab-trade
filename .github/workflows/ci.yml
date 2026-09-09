@@ -213,6 +213,12 @@ jobs:
       - name: Verify Thamani Gate 14 fail-closed cross-border readiness
         run: npm run verify:thamani-trade-readiness
 
+      - name: Bootstrap Thamani Gate 15 ERP mappings
+        run: npm run bootstrap:thamani-erp-integration
+
+      - name: Verify Thamani Gate 15 projections and idempotency
+        run: npm run verify:thamani-erp-integration
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

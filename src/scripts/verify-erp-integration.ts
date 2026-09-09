@@ -2,6 +2,7 @@ import type { ExecArgs } from "@medusajs/framework/types"
 import {
   DurableErpIntegrationAdapter,
   assertFinancialProjection,
+  erpProjectionDigest,
   reconcileErpProjection,
   type ErpProjectionCommand,
 } from "../baobab/erp-integration"
@@ -18,9 +19,24 @@ export default async function ({ container }: ExecArgs) {
   const adapter = new DurableErpIntegrationAdapter({
     async findByIdempotencyKey(key) {
       const [item] = await erp.listErpProjections({ source_idempotency_key: key })
-      return item
+      if (!item) return undefined
+      return {
+        id: item.id,
+        commandDigest:
+          item.command_digest ??
+          erpProjectionDigest({
+            kind: item.kind,
+            commerceReference: item.commerce_reference,
+            canonicalEntityId: item.canonical_entity_id,
+            legalSellerKey: item.legal_seller_key,
+            marketKey: item.market_key,
+            payload: item.payload as Record<string, unknown>,
+            idempotencyKey: item.source_idempotency_key,
+            correlationId: item.correlation_id,
+          }),
+      }
     },
-    async create(command: ErpProjectionCommand) {
+    async create(command: ErpProjectionCommand & { commandDigest: string }) {
       return erp.createErpProjections({
         kind: command.kind,
         commerce_reference: command.commerceReference,
@@ -30,11 +46,12 @@ export default async function ({ container }: ExecArgs) {
         payload: command.payload,
         status: "PENDING",
         source_idempotency_key: command.idempotencyKey,
+        command_digest: command.commandDigest,
         correlation_id: command.correlationId,
       })
     },
   })
-  const order = await adapter.queue({
+  const orderCommand: ErpProjectionCommand = {
     kind: "ORDER",
     commerceReference: "gate12-order",
     canonicalEntityId: "canonical:order:gate12",
@@ -48,17 +65,9 @@ export default async function ({ container }: ExecArgs) {
     },
     idempotencyKey: "gate12:order",
     correlationId: "gate12-verification",
-  })
-  const replay = await adapter.queue({
-    kind: "ORDER",
-    commerceReference: "gate12-order",
-    canonicalEntityId: "canonical:order:gate12",
-    legalSellerKey: "zuribeans-uganda",
-    marketKey: "zuribeans_ug",
-    payload: { duplicate: true },
-    idempotencyKey: "gate12:order",
-    correlationId: "gate12-verification",
-  })
+  }
+  const order = await adapter.queue(orderCommand)
+  const replay = await adapter.queue(orderCommand)
   if (replay.id !== order.id) throw new Error("ERP order projection is not idempotent")
   await adapter.queue({
     kind: "FULFILMENT",

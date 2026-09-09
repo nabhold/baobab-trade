@@ -14,8 +14,9 @@ Audit date: 2026-09-08. Baseline: `main` at `85e26cd` (Medusa 2.20.1, Node 24, P
 | 11    | Implemented in PR #48                           | Prepaid regional payment boundary, secure webhooks, refunds and ERP reconciliation.                                          |
 | 12    | Implemented in PR #49                           | Regional fulfilment, durable exact allocation, tracking, returns and reconciliation.                                         |
 | 13    | Implemented in PR #50                           | Effective UG/ZA tax rules, governed categories, provenance, inclusive display and reconciliation.                            |
-| 14    | Implemented in this Gate                        | Origin/HS/customs/landed-cost projections and fail-closed compliance review.                                                 |
-| 15–22 | Outstanding after Gate 14                       | Complete sequentially under the acceptance plan below.                                                                       |
+| 14    | Implemented in PR #51                           | Origin/HS/customs/landed-cost projections and fail-closed compliance review.                                                 |
+| 15    | Implemented in this Gate                        | Canonical ERP mappings plus seven replay-safe projection families and collision rejection.                                   |
+| 16–22 | Outstanding after Gate 15                       | Complete sequentially under the acceptance plan below.                                                                       |
 
 The audit found no reason to replace Medusa or duplicate native commerce modules. The main recurring risk is a policy wrapper that native Medusa routes can bypass; each remaining Gate must either hook the native workflow or prove the only allowed entry point is enforced server-side.
 
