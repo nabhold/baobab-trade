@@ -129,41 +129,70 @@ async function ensureRetailProjection(
   }
 
   for (const marketKey of config.eligibleMarkets) {
-    const [eligibility] = await thamani.listMarketProductEligibilities({
-      product_id: productId,
-      market_key: marketKey,
-    })
-    if (eligibility) continue
-
-    // Gate 14 fail-closed compliance: a product only becomes sellable in a
-    // Market once its HS classification has actually been reviewed. This is
-    // the ONLY enforcement point — no ACTIVE eligibility row is created (so
+    // Gate 14 fail-closed compliance: a product only stays sellable in a
+    // Market while its HS classification is actually verified. This is the
+    // ONLY enforcement point — no ACTIVE eligibility row is ever created (so
     // nothing downstream ever treats the product as eligible, see
-    // `deriveActiveEligibleMarketKeys`) until a verified
-    // `ThamaniTradeProfile` exists for this product/Market pair.
+    // `deriveActiveEligibleMarketKeys`) without a verified `ThamaniTradeProfile`
+    // for this product/Market pair.
     const [tradeProfile] = await tradeReadiness.listThamaniTradeProfiles({
       canonical_product_key: config.canonicalKey,
       market_key: marketKey,
     })
+    let isVerified = true
     try {
       requireVerifiedTradeProfile({
         hsClassificationStatus: tradeProfile?.hs_classification_status ?? "UNVERIFIED",
       })
     } catch (error) {
+      isVerified = false
       logger.warn(
-        `Skipping ${marketKey} eligibility for ${config.sku}: ${
+        `${marketKey} eligibility for ${config.sku} requires customs review: ${
           error instanceof Error ? error.message : String(error)
         }`,
       )
+    }
+
+    const policyReference = `control-plane:${marketKey}:catalogue`
+    const [eligibility] = await thamani.listMarketProductEligibilities({
+      product_id: productId,
+      market_key: marketKey,
+    })
+
+    if (!eligibility) {
+      if (isVerified) {
+        await thamani.createMarketProductEligibilities({
+          product_id: productId,
+          market_key: marketKey,
+          status: "ACTIVE",
+          policy_reference: policyReference,
+        })
+      }
       continue
     }
 
-    await thamani.createMarketProductEligibilities({
-      product_id: productId,
-      market_key: marketKey,
-      status: "ACTIVE",
-      policy_reference: `control-plane:${marketKey}:catalogue`,
-    })
+    // A row this same catalogue-onboarding process created earlier — before
+    // this gate existed, before its trade profile was revoked, or before a
+    // once-revoked profile was re-verified — must be reconciled to the
+    // current verification state, not left however it was found just
+    // because it already exists.
+    //
+    // `WITHDRAWN` is used (not `SUSPENDED`) specifically because it is the
+    // one status this bootstrap ever writes for compliance reasons — never
+    // for anything else — so reconciling a `WITHDRAWN` row back to `ACTIVE`
+    // on reverification can never be undoing someone else's decision.
+    // `SUSPENDED` is left alone in both directions: it is reserved for a
+    // different authority (e.g. a manual, non-compliance suspension —
+    // `regression-thamani-eligibility-sync.ts` proves this exact case), and
+    // this bootstrap must never reactivate a row it did not itself demote.
+    if (eligibility.policy_reference !== policyReference) continue
+    if (!isVerified && eligibility.status === "ACTIVE") {
+      await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "WITHDRAWN" })
+      logger.warn(`Withdrew ${marketKey} eligibility for ${config.sku}: no longer verified`)
+    } else if (isVerified && eligibility.status === "WITHDRAWN") {
+      await thamani.updateMarketProductEligibilities({ id: eligibility.id, status: "ACTIVE" })
+      logger.info(`Reactivated ${marketKey} eligibility for ${config.sku}: verification restored`)
+    }
   }
 }
 

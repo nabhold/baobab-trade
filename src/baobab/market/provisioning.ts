@@ -168,16 +168,27 @@ export async function bootstrapMarket(
     // previously silently ignored whenever the Region already existed. Keep
     // it in sync so a Market's own provider choice actually takes effect,
     // not just at first-ever creation.
-    // Because this row is shared, whichever Digital Estate's bootstrap runs
-    // LAST for a given country determines the provider both estates get
-    // until the next bootstrap. ZuriBeans' `bootstrap:market` always runs
-    // before Thamani's `bootstrap:thamani-market` (see ci.yml) precisely so
-    // Thamani's provider is the one left in place.
-    await taxService.updateTaxRegions({ id: taxRegion.id, provider_id: config.tax.providerId })
-    log("updated tax region provider to match this Market's configuration", {
-      taxRegionId: taxRegion.id,
-      providerId: config.tax.providerId,
-    })
+    //
+    // Never downgrade an already-installed non-default provider back to the
+    // bundled `tp_system` default: a re-run of a sibling estate's bootstrap
+    // (a legitimate, idempotent, order-independent operation — e.g. adding
+    // a new ZuriBeans Market later) would otherwise silently strip whatever
+    // custom provider another estate installed on this shared row, with no
+    // later bootstrap guaranteed to reinstall it. Installing a non-default
+    // provider over `tp_system` (in either direction, in any order) is
+    // always safe to apply immediately.
+    if (config.tax.providerId === "tp_system" && taxRegion.provider_id !== "tp_system") {
+      log("keeping a sibling estate's non-default tax provider on this shared Tax Region", {
+        taxRegionId: taxRegion.id,
+        keptProviderId: taxRegion.provider_id,
+      })
+    } else {
+      await taxService.updateTaxRegions({ id: taxRegion.id, provider_id: config.tax.providerId })
+      log("updated tax region provider to match this Market's configuration", {
+        taxRegionId: taxRegion.id,
+        providerId: config.tax.providerId,
+      })
+    }
   } else {
     log("tax region already provisioned", { taxRegionId: taxRegion.id })
   }
@@ -202,12 +213,28 @@ export async function bootstrapMarket(
   if (config.tax.pricesIncludeTax) {
     for (const currency of config.allowedCurrencies) {
       const currencyCode = toMedusaCurrencyCode(currency)
-      await pricingService.upsertPricePreferences({
+      // `price_preference` has a unique index on (attribute, value) and
+      // `upsertPricePreferences` treats an id-less input as a create, not an
+      // upsert against that constraint — a second run without this check
+      // fails outright with a unique-constraint violation instead of being
+      // a no-op.
+      const [existingPreference] = await pricingService.listPricePreferences({
         attribute: "currency_code",
         value: currencyCode,
-        is_tax_inclusive: true,
       })
-      log("set currency prices to tax-inclusive", { currencyCode })
+      if (!existingPreference) {
+        await pricingService.createPricePreferences({
+          attribute: "currency_code",
+          value: currencyCode,
+          is_tax_inclusive: true,
+        })
+        log("set currency prices to tax-inclusive", { currencyCode })
+      } else if (!existingPreference.is_tax_inclusive) {
+        await pricingService.updatePricePreferences(existingPreference.id, {
+          is_tax_inclusive: true,
+        })
+        log("updated currency price preference to tax-inclusive", { currencyCode })
+      }
     }
   }
 
