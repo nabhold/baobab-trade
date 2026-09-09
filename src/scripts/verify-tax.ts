@@ -9,7 +9,9 @@ import {
 import type TaxBridgeModuleService from "../modules/tax-bridge/service"
 export default async function ({ container }: ExecArgs) {
   const bridge = container.resolve<TaxBridgeModuleService>("taxBridge")
-  const policies = await bridge.listTaxPolicyBindings({})
+  const policies = await bridge.listTaxPolicyBindings({
+    market_key: ["zuribeans_ug", "zuribeans_za"],
+  })
   if (policies.length !== 2) throw new Error(`Expected 2 tax contexts, found ${policies.length}`)
   const context = resolveTaxContext("zuribeans_ug", "zuribeans-uganda")
   const effectiveFrom = new Date("2026-01-01T00:00:00Z")
@@ -83,6 +85,7 @@ export default async function ({ container }: ExecArgs) {
     transactionType: "GOODS",
     currency: context.currency,
     taxableBasisMinor: 100_000,
+    priceDisplayMode: "TAX_EXCLUSIVE",
     effectiveAt: new Date("2026-09-08T00:00:00Z"),
     idempotencyKey: "gate10:determine:ug",
     correlationId: "gate10-verification",
@@ -106,6 +109,9 @@ export default async function ({ container }: ExecArgs) {
       currency_code: result.currency,
       taxable_basis_minor: result.taxableBasisMinor,
       tax_amount_minor: result.taxAmountMinor,
+      net_amount_minor: result.netAmountMinor,
+      gross_amount_minor: result.grossAmountMinor,
+      price_display_mode: result.priceDisplayMode,
       rate_basis_points: result.rateBasisPoints,
       rule_reference: result.ruleReference,
       rule_version: result.ruleVersion,

@@ -12,7 +12,9 @@ Audit date: 2026-09-08. Baseline: `main` at `85e26cd` (Medusa 2.20.1, Node 24, P
 | 9     | Implemented; corrective PR #45 merged           | Native workflow hook closes the Store API policy bypass.                                                                     |
 | 10    | Implemented in PR #47                           | Multi-location inventory, reservations, ERP projections and explicit variance reconciliation.                                |
 | 11    | Implemented in PR #48                           | Prepaid regional payment boundary, secure webhooks, refunds and ERP reconciliation.                                          |
-| 12–22 | Outstanding after Gate 11                       | Complete sequentially under the acceptance plan below.                                                                       |
+| 12    | Implemented in PR #49                           | Regional fulfilment, durable exact allocation, tracking, returns and reconciliation.                                         |
+| 13    | Implemented in this Gate                        | Effective UG/ZA tax rules, governed categories, provenance, inclusive display and reconciliation.                            |
+| 14–22 | Outstanding after Gate 13                       | Complete sequentially under the acceptance plan below.                                                                       |
 
 The audit found no reason to replace Medusa or duplicate native commerce modules. The main recurring risk is a policy wrapper that native Medusa routes can bypass; each remaining Gate must either hook the native workflow or prove the only allowed entry point is enforced server-side.
 

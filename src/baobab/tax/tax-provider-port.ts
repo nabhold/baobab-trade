@@ -21,7 +21,8 @@ export type TaxDeterminationRequest = {
   marketKey: string
   legalSellerKey: string
   sellerRegistrationReference: string
-  organisationId: string
+  organisationId?: string
+  customerReference?: string
   customerTaxRegistrationReference?: string
   customerTaxVerificationStatus?: "VERIFIED" | "UNVERIFIED" | "EXPIRED" | "REJECTED"
   jurisdictionKey: string
@@ -32,6 +33,7 @@ export type TaxDeterminationRequest = {
   transactionType: TransactionType
   currency: string
   taxableBasisMinor: number
+  priceDisplayMode: "TAX_INCLUSIVE" | "TAX_EXCLUSIVE"
   effectiveAt: Date
   idempotencyKey: string
   correlationId: string
@@ -43,6 +45,9 @@ export type TaxDetermination = TaxDeterminationRequest & {
   treatment: TaxTreatment
   rateBasisPoints: number
   taxAmountMinor: number
+  netAmountMinor: number
+  grossAmountMinor: number
+  priceDisplayMode: "TAX_INCLUSIVE" | "TAX_EXCLUSIVE"
   legalReason?: string
   providerKey: string
   calculationReference: string
@@ -73,6 +78,8 @@ export const selectEffectiveRule = (rules: readonly EffectiveTaxRule[], effectiv
 export class EffectiveDatedTaxProviderAdapter implements TaxDeterminationPort {
   constructor(private readonly provider: EffectiveTaxRuleProvider) {}
   async determine(request: TaxDeterminationRequest): Promise<TaxDetermination> {
+    if (Boolean(request.organisationId) === Boolean(request.customerReference))
+      throw new Error("Exactly one tax subject is required")
     if (!Number.isSafeInteger(request.taxableBasisMinor) || request.taxableBasisMinor < 0)
       throw new Error("Taxable basis must be a non-negative integer in minor units")
     const rule = selectEffectiveRule(await this.provider.listRules(request), request.effectiveAt)
@@ -84,10 +91,20 @@ export class EffectiveDatedTaxProviderAdapter implements TaxDeterminationPort {
       throw new Error("Tax provider returned a rule outside the requested context")
     if (["ZERO_RATED", "EXEMPT", "REVERSE_CHARGE"].includes(rule.treatment) && !rule.legalReason)
       throw new Error("Protected zero-tax treatment requires legal reason provenance")
+    const priceDisplayMode = request.priceDisplayMode
     const taxAmountMinor =
-      rule.treatment === "STANDARD"
-        ? Math.round((request.taxableBasisMinor * rule.rateBasisPoints) / 10_000)
-        : 0
+      rule.treatment !== "STANDARD"
+        ? 0
+        : priceDisplayMode === "TAX_INCLUSIVE"
+          ? Math.round(
+              (request.taxableBasisMinor * rule.rateBasisPoints) / (10_000 + rule.rateBasisPoints),
+            )
+          : Math.round((request.taxableBasisMinor * rule.rateBasisPoints) / 10_000)
+    const netAmountMinor =
+      priceDisplayMode === "TAX_INCLUSIVE"
+        ? request.taxableBasisMinor - taxAmountMinor
+        : request.taxableBasisMinor
+    const grossAmountMinor = netAmountMinor + taxAmountMinor
     return {
       ...request,
       ruleReference: rule.ruleReference,
@@ -95,6 +112,9 @@ export class EffectiveDatedTaxProviderAdapter implements TaxDeterminationPort {
       treatment: rule.treatment,
       rateBasisPoints: rule.rateBasisPoints,
       taxAmountMinor,
+      netAmountMinor,
+      grossAmountMinor,
+      priceDisplayMode,
       legalReason: rule.legalReason,
       providerKey: this.provider.providerKey,
       calculationReference: `${request.determinationReference}:${rule.ruleVersion}`,

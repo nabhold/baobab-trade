@@ -201,6 +201,12 @@ jobs:
       - name: Verify Thamani Gate 12 partial allocation, tracking, returns, and reconciliation
         run: npm run verify:thamani-fulfilment
 
+      - name: Bootstrap Thamani Gate 13 effective tax reference data
+        run: npm run bootstrap:thamani-tax
+
+      - name: Verify Thamani Gate 13 inclusive tax, provenance, and reconciliation
+        run: npm run verify:thamani-tax
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:
