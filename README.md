@@ -118,9 +118,13 @@ see `docs/simulation/zuribeans-ug-za.md`.
 
 Thamani is a second, coexisting Baobab Digital Estate on this same Trade
 engine instance — a strict B2C retailer with many independent suppliers, not
-a marketplace and not a second ZuriBeans storefront. Gates 0-13 (Discovery
-through Cross-border Trade Readiness) are implemented; ERP integration,
-events, Store Credit, and the simulation dataset remain planned. See
+a marketplace and not a second ZuriBeans storefront. ERP integration, events,
+Store Credit, and a deterministic Uganda-South Africa simulation pack (50
+consumers, real orders with captured payments, a real return/refund, a
+cross-border import order, and their ERP consequences — run
+`npm run verify:thamani-simulation` and `npm run regression:thamani-simulation-pack`;
+see `docs/simulation/thamani-ug-za.md`) are all implemented on top of Gates
+0-13 (Discovery through Cross-border Trade Readiness). See
 `docs/architecture/thamani-b2c-foundation.md`
 for Gates 0-6, including the two Medusa store-wide constraints (one Region
 per country, globally unique Fulfillment Service Zone names) that shape how

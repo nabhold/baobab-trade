@@ -167,6 +167,9 @@ jobs:
       - name: Verify Gate 18 ZuriBeans Uganda-South Africa simulation
         run: npm run verify:simulation
 
+      - name: Verify Gate 22 Thamani Uganda-South Africa simulation
+        run: npm run verify:thamani-simulation
+
       - name: Rebuild Thamani B2C product search index
         run: npm run bootstrap:thamani-search
 
@@ -235,6 +238,9 @@ jobs:
 
       - name: Regression Thamani Gate 17 store credit issuance
         run: npm run regression:thamani-store-credit-issuance
+
+      - name: Regression Gate 22 Thamani simulation pack — real orders, payments, returns, stock, imports, ERP
+        run: npm run regression:thamani-simulation-pack
 
       - name: Verify Gate 20 reconciliation sweep
         run: npm run verify:observability
