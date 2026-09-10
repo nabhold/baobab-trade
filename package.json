@@ -76,7 +76,8 @@
     "test:conformance": "vitest run tests/production-conformance.test.ts",
     "test:watch": "vitest",
     "verify:core-modules": "medusa exec ./src/scripts/verify-core-modules.ts",
-    "verify:infrastructure": "medusa exec ./src/scripts/verify-infrastructure.ts"
+    "verify:infrastructure": "medusa exec ./src/scripts/verify-infrastructure.ts",
+    "verify:observability": "medusa exec ./src/scripts/verify-observability.ts"
   },
   "dependencies": {
     "@medusajs/framework": "2.20.1",

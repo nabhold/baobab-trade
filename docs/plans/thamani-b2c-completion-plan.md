@@ -20,7 +20,8 @@ Audit date: 2026-09-08. Baseline: `main` at `85e26cd` (Medusa 2.20.1, Node 24, P
 | 17    | Implemented in this Gate                        | Store Credit as native Order Credit Lines with REFUND/SERVICE/PROMOTIONAL reasons and derived ERP financial consequence.                                                                               |
 | 18    | Implemented in this Gate                        | Dedicated contract tests for all seven `CommerceCapabilityPorts` extraction seams, run as their own CI step, while Medusa/projected/disabled adapters remain the active binding for every one of them. |
 | 19    | Implemented in this Gate                        | Consumer authorization/isolation, secure guest-order lookup, PII-aware log/event redaction, anonymisation and abuse-control (rate-limit) primitives, plus a Thamani-specific threat model doc.         |
-| 20–22 | Outstanding after Gate 19                       | Complete sequentially under the acceptance plan below.                                                                                                                                                 |
+| 20    | Implemented in this Gate                        | Per-domain reconciliation-sweep SLOs/alerts/metrics for payments, stock, tax, fulfilment and ERP, a Thamani operations dashboard, and a payments runbook.                                              |
+| 21–22 | Outstanding after Gate 20                       | Complete sequentially under the acceptance plan below.                                                                                                                                                 |
 
 The audit found no reason to replace Medusa or duplicate native commerce modules. The main recurring risk is a policy wrapper that native Medusa routes can bypass; each remaining Gate must either hook the native workflow or prove the only allowed entry point is enforced server-side.
 
