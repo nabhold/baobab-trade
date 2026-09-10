@@ -51,4 +51,20 @@ describe("Gate 16 observability", () => {
     expect(lines[0]).not.toContain("do-not-log")
     expect(lines[0]).toContain("[REDACTED]")
   })
+  it("redacts consumer PII, not just credentials, from structured log metadata", () => {
+    const lines: string[] = []
+    const original = console.log
+    console.log = (line) => lines.push(String(line))
+    try {
+      createStructuredLogger("trade").info("registration", {
+        correlation_id: "corr",
+        customer: { email: "consumer@example.com", phone: "+256700000000" },
+      })
+    } finally {
+      console.log = original
+    }
+    expect(lines[0]).not.toContain("consumer@example.com")
+    expect(lines[0]).not.toContain("+256700000000")
+    expect(lines[0]).toContain("[REDACTED]")
+  })
 })

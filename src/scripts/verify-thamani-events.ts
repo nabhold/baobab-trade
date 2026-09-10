@@ -1,15 +1,7 @@
 import type { ExecArgs } from "@medusajs/framework/types"
 import { isValidCloudEvent, THAMANI_EVENT_TYPES, type BaobabCloudEvent } from "../baobab/events"
+import { assertNoPersonalData, assertNoSensitiveEventData } from "../baobab/security"
 import type EventOutboxModuleService from "../modules/event-outbox/service"
-
-const FORBIDDEN_KEYS = new Set(["email", "phone", "password", "card_number", "cvv", "address"])
-const containsForbiddenKey = (value: unknown): boolean => {
-  if (Array.isArray(value)) return value.some(containsForbiddenKey)
-  if (!value || typeof value !== "object") return false
-  return Object.entries(value as Record<string, unknown>).some(
-    ([key, nested]) => FORBIDDEN_KEYS.has(key.toLowerCase()) || containsForbiddenKey(nested),
-  )
-}
 
 export default async function ({ container }: ExecArgs) {
   const service = container.resolve<EventOutboxModuleService>("eventOutbox")
@@ -52,8 +44,8 @@ export default async function ({ container }: ExecArgs) {
       envelope.data.legal_seller_key !== "thamani-south-africa"
     )
       throw new Error("South Africa event has the wrong legal seller")
-    if (containsForbiddenKey(envelope.data))
-      throw new Error("Thamani event contains forbidden PII or payment data")
+    assertNoPersonalData(envelope.data)
+    assertNoSensitiveEventData(envelope.data)
 
     const receiptKey = { consumer_name: "thamani-idempiere", event_id: row.event_id }
     const existingReceipts = await service.listEventConsumerReceipts(receiptKey)
