@@ -12,6 +12,6 @@
     "outDir": "dist",
     "types": ["node", "vitest/globals"]
   },
-  "include": ["medusa-config.ts", "src/**/*.ts", "tests/**/*.ts"],
+  "include": ["medusa-config.ts", "src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", ".medusa", "dist"]
 }

@@ -21,7 +21,8 @@
     "fresh-database-migrations",
     "production-provider-migrations",
     "codeql",
-    "container-scan"
+    "container-scan",
+    "release-manifest"
   ],
   "requiredDocumentation": [
     "docs/architecture/zuribeans-b2b-commerce.md",
@@ -29,6 +30,8 @@
     "docs/architecture/zuribeans-events-outbox.md",
     "docs/security/zuribeans-b2b-threat-model.md",
     "docs/operations/observability.md",
-    "docs/operations/production-infrastructure.md"
+    "docs/operations/production-infrastructure.md",
+    "docs/operations/runbooks/payments.md",
+    "docs/operations/runbooks/migrations.md"
   ]
 }
