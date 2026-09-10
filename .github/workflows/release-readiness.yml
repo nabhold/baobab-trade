@@ -35,4 +35,4 @@ jobs:
         with:
           name: release-evidence-${{ github.sha }}
           path: release-manifest.json
-          retention-days: 90
+          retention-days: 15
