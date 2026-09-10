@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "medusa develop",
     "build": "medusa build",
+    "release:manifest": "ts-node scripts/generate-release-manifest.ts",
     "start": "medusa start",
     "migrate": "medusa db:migrate",
     "migrate:search": "medusa db:migrate:search",
