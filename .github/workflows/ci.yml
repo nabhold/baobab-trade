@@ -236,6 +236,9 @@ jobs:
       - name: Regression Thamani Gate 17 store credit issuance
         run: npm run regression:thamani-store-credit-issuance
 
+      - name: Verify Gate 20 reconciliation sweep
+        run: npm run verify:observability
+
   production-infrastructure-integration:
     runs-on: ubuntu-26.04
     services:

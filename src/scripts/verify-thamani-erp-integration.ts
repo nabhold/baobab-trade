@@ -3,6 +3,7 @@ import { THAMANI_DIGITAL_ESTATE_CANONICAL_ID } from "../baobab/context/digital-e
 import {
   DurableErpIntegrationAdapter,
   erpProjectionDigest,
+  reconcileErpProjection,
   type ErpProjectionCommand,
 } from "../baobab/erp-integration"
 import {
@@ -98,6 +99,27 @@ export default async function ({ container }: ExecArgs) {
     rejected = true
   }
   if (!rejected) throw new Error("ERP idempotency collision was accepted")
+
+  // Gate 20: prove Thamani's own ERP projections are reconciliation-swept, not
+  // only ZuriBeans' (verify-erp-integration.ts) — this row is what
+  // verify-observability.ts's reconciliation sweep reads back.
+  const reconciliation = reconcileErpProjection({
+    expected: { supplier: "sup_ug_mountain_roasters" },
+  })
+  const [existingRec] = await erp.listErpReconciliations({
+    source_idempotency_key: "gate15:thamani:reconcile:product",
+  })
+  if (!existingRec)
+    await erp.createErpReconciliations({
+      projection_kind: "PRODUCT",
+      commerce_reference: "gate15-product",
+      expected_state: { supplier: "sup_ug_mountain_roasters" },
+      differences: reconciliation.differences,
+      status: reconciliation.status,
+      source_idempotency_key: "gate15:thamani:reconcile:product",
+      observed_at: new Date(),
+    })
+
   container
     .resolve("logger")
     .info(
