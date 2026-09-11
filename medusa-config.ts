@@ -10,6 +10,34 @@ for (const secret of requiredSecrets) {
   }
 }
 
+// Gate IAM-5 (ADR-0009): workforce SSO against Baobab IAM's
+// baobab-trade-admin OIDC client, using Medusa's own bundled
+// @medusajs/auth-oidc provider. Conditional on BAOBAB_IAM_OIDC_ISSUER
+// being set -- @medusajs/auth-oidc's `issuer` option is required with no
+// default, so registering it unconditionally would break every
+// environment that hasn't configured Baobab IAM yet (every CI job and
+// local dev checkout today). Registering the @medusajs/medusa/auth
+// module at all replaces Medusa's own default provider list rather than
+// merging with it, so emailpass is listed explicitly alongside oidc to
+// keep existing local admin login working unchanged.
+const authProviders: { resolve: string; id: string; options?: Record<string, unknown> }[] = [
+  { resolve: "@medusajs/medusa/auth-emailpass", id: "emailpass" },
+]
+if (process.env.BAOBAB_IAM_OIDC_ISSUER) {
+  authProviders.push({
+    resolve: "@medusajs/auth-oidc",
+    id: "oidc",
+    options: {
+      issuer: process.env.BAOBAB_IAM_OIDC_ISSUER,
+      client_id: process.env.BAOBAB_IAM_OIDC_CLIENT_ID || "baobab-trade-admin",
+      client_secret: process.env.BAOBAB_IAM_OIDC_CLIENT_SECRET,
+      callback_url:
+        process.env.BAOBAB_IAM_OIDC_CALLBACK_URL || "http://localhost:9000/auth/user/oidc/callback",
+      display_name: "Baobab Workforce SSO",
+    },
+  })
+}
+
 export default defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -39,6 +67,12 @@ export default defineConfig({
     },
     { resolve: "./src/modules/erp-integration" },
     { resolve: "./src/modules/event-outbox" },
+    {
+      resolve: "@medusajs/medusa/auth",
+      options: {
+        providers: authProviders,
+      },
+    },
     {
       resolve: "@medusajs/medusa/search",
       options: {

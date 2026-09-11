@@ -83,6 +83,7 @@
     "verify:observability": "medusa exec ./src/scripts/verify-observability.ts"
   },
   "dependencies": {
+    "@medusajs/auth-oidc": "2.20.1",
     "@medusajs/framework": "2.20.1",
     "@medusajs/medusa": "2.20.1",
     "@medusajs/utils": "2.20.1",
