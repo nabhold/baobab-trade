@@ -48,6 +48,20 @@ export default defineConfig({
       authCors: process.env.AUTH_CORS || "http://localhost:7001,http://localhost:9000",
       jwtSecret: process.env.JWT_SECRET || "development-jwt-secret",
       cookieSecret: process.env.COOKIE_SECRET || "development-cookie-secret",
+      // Gate IAM-9 (ADR-0013 §12-13): a registered auth provider is
+      // available to every actor type unless explicitly restricted here --
+      // "not having the config defined would allow for all auth providers
+      // for the particular actor" (@medusajs/medusa's own
+      // auth-methods-per-actor.js). Without this, the "oidc" provider
+      // registered below for workforce admin login (Gate IAM-5) was also
+      // implicitly reachable via /auth/customer/oidc/*, even though no
+      // customer-facing OIDC integration exists yet (Gate IAM-7 deferred
+      // pending its own architectural decision). `customer` stays
+      // emailpass-only until that lands.
+      authMethodsPerActor: {
+        customer: ["emailpass"],
+        user: authProviders.map((provider) => provider.id),
+      },
     },
   },
   modules: [
